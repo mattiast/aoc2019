@@ -1,8 +1,7 @@
 use std::io;
 
-
 fn main() -> io::Result<()> {
-    let a = advent::day01::part1()?;
-    println!("{}", a);
+    println!("{}", advent::day01::part1()?);
+    println!("{}", advent::day01::part2()?);
     Ok(())
 }
