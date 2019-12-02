@@ -62,7 +62,7 @@ pub mod day02 {
         Terminate,
     }
 
-    fn parse_instruction(program: &Vec<usize>, index: usize) -> Result<Op, &'static str> {
+    fn parse_instruction(program: &[usize], index: usize) -> Result<Op, &'static str> {
         let opcode = *program.get(index).ok_or("out of bounds")?;
         if opcode == 99 {
             return Ok(Op::Terminate);
@@ -82,7 +82,10 @@ pub mod day02 {
         Err("invalid opcode")
     }
 
-    fn execute_instruction(program: &mut Vec<usize>, index: usize) -> Result<Option<usize>, &str> {
+    fn execute_instruction(
+        program: &mut Vec<usize>,
+        index: usize,
+    ) -> Result<Option<usize>, &'static str> {
         let inst = parse_instruction(&program, index)?;
         match inst {
             Op::Terminate => Ok(None),
@@ -101,13 +104,10 @@ pub mod day02 {
         }
     }
 
-    pub fn part1() -> io::Result<usize> {
-        let mut x = read_input()?;
-        x[1] = 12;
-        x[2] = 2;
+    fn execute_until_termination(program: &mut Vec<usize>) -> Result<usize, &'static str> {
         let mut i: usize = 0;
         loop {
-            let new_i = execute_instruction(&mut x, i).unwrap();
+            let new_i = execute_instruction(program, i)?;
             match new_i {
                 None => break,
                 Some(ii) => {
@@ -115,7 +115,47 @@ pub mod day02 {
                 }
             }
         }
-        Ok(x[0])
+        Ok(program[0])
+    }
+
+    pub fn part1() -> io::Result<usize> {
+        let x = read_input()?;
+        let result = execute_with_input(&x, 12, 2).unwrap();
+        Ok(result)
+    }
+
+    fn execute_with_input(program: &[usize], x1: usize, x2: usize) -> Result<usize, &'static str> {
+        let mut prog_copy: Vec<usize> = program.to_vec();
+        prog_copy[1] = x1;
+        prog_copy[2] = x2;
+        execute_until_termination(&mut prog_copy)
+    }
+
+    use clap::{value_t_or_exit, App, Arg};
+    pub fn part2_manual() -> io::Result<usize> {
+        let matches = App::new("run computer")
+            .arg(Arg::with_name("x0"))
+            .arg(Arg::with_name("x1"))
+            .get_matches();
+        let x0 = value_t_or_exit!(matches, "x0", usize);
+        let x1 = value_t_or_exit!(matches, "x1", usize);
+
+        let x = read_input()?;
+        let result = execute_with_input(&x, x0, x1).unwrap();
+        Ok(result)
+    }
+
+    pub fn part2() -> io::Result<(usize, usize)> {
+        let x = read_input()?;
+        for x1 in 0..100 {
+            for x2 in 0..100 {
+                let result = execute_with_input(&x, x1, x2).unwrap();
+                if result == 1969_0720 {
+                    return Ok((x1, x2));
+                }
+            }
+        }
+        Err(io::Error::new(io::ErrorKind::Other, "not found"))
     }
 
     #[test]
