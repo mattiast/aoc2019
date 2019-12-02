@@ -16,21 +16,21 @@ enum Op {
     Terminate,
 }
 
-fn parse_instruction(program: &[usize], index: usize) -> Result<Op, &'static str> {
-    let opcode = *program.get(index).ok_or("out of bounds")?;
+fn parse_instruction(program: &[usize], ip: usize) -> Result<Op, &'static str> {
+    let opcode = *program.get(ip).ok_or("out of bounds")?;
     if opcode == 99 {
         return Ok(Op::Terminate);
     }
     if opcode == 1 {
-        let x1 = *program.get(index + 1).ok_or("out of bounds")?;
-        let x2 = *program.get(index + 2).ok_or("out of bounds")?;
-        let x3 = *program.get(index + 3).ok_or("out of bounds")?;
+        let x1 = *program.get(ip + 1).ok_or("out of bounds")?;
+        let x2 = *program.get(ip + 2).ok_or("out of bounds")?;
+        let x3 = *program.get(ip + 3).ok_or("out of bounds")?;
         return Ok(Op::Add(x1, x2, x3));
     }
     if opcode == 2 {
-        let x1 = *program.get(index + 1).ok_or("out of bounds")?;
-        let x2 = *program.get(index + 2).ok_or("out of bounds")?;
-        let x3 = *program.get(index + 3).ok_or("out of bounds")?;
+        let x1 = *program.get(ip + 1).ok_or("out of bounds")?;
+        let x2 = *program.get(ip + 2).ok_or("out of bounds")?;
+        let x3 = *program.get(ip + 3).ok_or("out of bounds")?;
         return Ok(Op::Mul(x1, x2, x3));
     }
     Err("invalid opcode")
@@ -38,34 +38,34 @@ fn parse_instruction(program: &[usize], index: usize) -> Result<Op, &'static str
 
 fn execute_instruction(
     program: &mut Vec<usize>,
-    index: usize,
+    ip: usize,
 ) -> Result<Option<usize>, &'static str> {
-    let inst = parse_instruction(&program, index)?;
+    let inst = parse_instruction(&program, ip)?;
     match inst {
         Op::Terminate => Ok(None),
         Op::Add(i1, i2, i3) => {
             let x1 = program.get(i1).ok_or("out of bounds")?;
             let x2 = program.get(i2).ok_or("out of bounds")?;
             program[i3] = x1 + x2;
-            Ok(Some(index + 4))
+            Ok(Some(ip + 4))
         }
         Op::Mul(i1, i2, i3) => {
             let x1 = program.get(i1).ok_or("out of bounds")?;
             let x2 = program.get(i2).ok_or("out of bounds")?;
             program[i3] = x1 * x2;
-            Ok(Some(index + 4))
+            Ok(Some(ip + 4))
         }
     }
 }
 
 fn execute_until_termination(program: &mut Vec<usize>) -> Result<usize, &'static str> {
-    let mut i: usize = 0;
+    let mut ip: usize = 0;
     loop {
-        let new_i = execute_instruction(program, i)?;
-        match new_i {
+        let new_ip = execute_instruction(program, ip)?;
+        match new_ip {
             None => break,
             Some(ii) => {
-                i = ii;
+                ip = ii;
             }
         }
     }
