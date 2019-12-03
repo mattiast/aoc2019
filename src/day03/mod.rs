@@ -1,73 +1,80 @@
-use std::fs::File;
-use std::io;
-use std::io::BufReader;
-use std::io::prelude::BufRead;
+mod types {
 
-fn parse_wires(buf: &str) -> Wires {
-    let mut wires: Wires = vec![];
-    for wire in buf.split(',') {
-        let chars: Vec<char> = wire.chars().collect();
-        let dir = match chars[0] {
-            'D' => Direction::D,
-            'U' => Direction::U,
-            'L' => Direction::L,
-            'R' => Direction::R,
-            _ => panic!("wrong"),
-        };
-        let s: String = chars[1..].iter().collect();
-        let i: i32 = s.trim_end().parse::<i32>().unwrap();
-
-        wires.push((dir, i));
+    #[derive(Debug)]
+    pub enum Direction {
+        R,
+        D,
+        L,
+        U,
     }
-    wires
+
+    pub type Wires = Vec<(Direction, i32)>;
+
+    #[derive(Clone, Copy)]
+    pub enum Segment {
+        Horizontal(i32, i32, i32),
+        Vertical(i32, i32, i32),
+    }
 }
 
-fn read_input() -> io::Result<(Wires, Wires)> {
-    let file = File::open("data/input03.txt")?;
-    let mut reader = BufReader::new(file);
+mod parse {
+    use super::types::{Direction, Wires};
+    use std::fs::File;
+    use std::io;
+    use std::io::prelude::BufRead;
+    use std::io::BufReader;
 
-    let mut buf = String::with_capacity(200);
-    reader.read_line(&mut buf)?;
-    let w1 = parse_wires(&buf);
+    fn parse_wires(buf: &str) -> Wires {
+        let mut wires: Wires = vec![];
+        for wire in buf.split(',') {
+            let chars: Vec<char> = wire.chars().collect();
+            let dir = match chars[0] {
+                'D' => Direction::D,
+                'U' => Direction::U,
+                'L' => Direction::L,
+                'R' => Direction::R,
+                _ => panic!("wrong"),
+            };
+            let s: String = chars[1..].iter().collect();
+            let i: i32 = s.trim_end().parse::<i32>().unwrap();
 
-    buf.clear();
-    reader.read_line(&mut buf)?;
-    let w2 = parse_wires(&buf);
+            wires.push((dir, i));
+        }
+        wires
+    }
 
-    Ok((w1, w2))
+    pub fn read_input() -> io::Result<(Wires, Wires)> {
+        let file = File::open("data/input03.txt")?;
+        let mut reader = BufReader::new(file);
+
+        let mut buf = String::with_capacity(200);
+        reader.read_line(&mut buf)?;
+        let w1 = parse_wires(&buf);
+
+        buf.clear();
+        reader.read_line(&mut buf)?;
+        let w2 = parse_wires(&buf);
+
+        Ok((w1, w2))
+    }
 }
 
-#[derive(Debug)]
-enum Direction {
-    R,
-    D,
-    L,
-    U,
-}
-
-type Wires = Vec<(Direction, i32)>;
-
-#[derive(Clone, Copy)]
-enum Segment {
-    Horizontal(i32, i32, i32),
-    Vertical(i32, i32, i32),
-}
+use types::*;
+use parse::read_input;
 
 fn crossing(s1: Segment, s2: Segment) -> Option<(i32, i32)> {
     match (s1, s2) {
         (Segment::Horizontal(x1, x2, y), Segment::Vertical(x, y1, y2)) => {
             if x1 < x && x < x2 && y1 < y && y < y2 {
                 Some((x, y))
-            }
-            else {
+            } else {
                 None
             }
         }
         (Segment::Vertical(x, y1, y2), Segment::Horizontal(x1, x2, y)) => {
             if x1 < x && x < x2 && y1 < y && y < y2 {
                 Some((x, y))
-            }
-            else {
+            } else {
                 None
             }
         }
