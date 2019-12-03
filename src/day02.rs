@@ -36,10 +36,7 @@ fn parse_instruction(program: &[usize], ip: usize) -> Result<Op, &'static str> {
     Err("invalid opcode")
 }
 
-fn execute_instruction(
-    program: &mut Vec<usize>,
-    ip: usize,
-) -> Result<Option<usize>, &'static str> {
+fn execute_instruction(program: &mut Vec<usize>, ip: usize) -> Result<Option<usize>, &'static str> {
     let inst = parse_instruction(&program, ip)?;
     match inst {
         Op::Terminate => Ok(None),
