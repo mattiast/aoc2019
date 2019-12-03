@@ -8,8 +8,10 @@ pub enum Direction {
 
 pub type Wires = Vec<(Direction, i32)>;
 
+pub type Point = (f64, f64);
+
 #[derive(Clone, Copy)]
 pub enum Segment {
-    Horizontal(i32, i32, i32),
-    Vertical(i32, i32, i32),
+    Horizontal(f64, f64, f64),
+    Vertical(f64, f64, f64),
 }

@@ -4,17 +4,21 @@ mod parse;
 use types::*;
 use parse::read_input;
 
-fn crossing(s1: Segment, s2: Segment) -> Option<(i32, i32)> {
+fn crossing(s1: Segment, s2: Segment) -> Option<Point> {
     match (s1, s2) {
         (Segment::Horizontal(x1, x2, y), Segment::Vertical(x, y1, y2)) => {
-            if x1 < x && x < x2 && y1 < y && y < y2 {
+            let kx = (x - x1) / (x2 - x1);
+            let ky = (y - y1) / (y2 - y1);
+            if kx > 0. && kx < 1. && ky > 0. && ky < 1. {
                 Some((x, y))
             } else {
                 None
             }
         }
         (Segment::Vertical(x, y1, y2), Segment::Horizontal(x1, x2, y)) => {
-            if x1 < x && x < x2 && y1 < y && y < y2 {
+            let kx = (x - x1) / (x2 - x1);
+            let ky = (y - y1) / (y2 - y1);
+            if kx > 0. && kx < 1. && ky > 0. && ky < 1. {
                 Some((x, y))
             } else {
                 None
@@ -25,30 +29,31 @@ fn crossing(s1: Segment, s2: Segment) -> Option<(i32, i32)> {
 }
 
 fn wires_to_segments(wires: &Wires) -> Vec<Segment> {
-    let mut loc_x: i32 = 0;
-    let mut loc_y: i32 = 0;
+    let mut loc_x: f64 = 0.;
+    let mut loc_y: f64 = 0.;
 
     let mut segments: Vec<Segment> = vec![];
     for (d, l) in wires.iter() {
+        let fl = *l as f64;
         match *d {
             Direction::D => {
-                let next = Segment::Vertical(loc_x, loc_y - *l, loc_y);
-                loc_y -= *l;
+                let next = Segment::Vertical(loc_x, loc_y, loc_y - fl);
+                loc_y -= fl;
                 segments.push(next);
             }
             Direction::U => {
-                let next = Segment::Vertical(loc_x, loc_y, loc_y + *l);
-                loc_y += *l;
+                let next = Segment::Vertical(loc_x, loc_y, loc_y + fl);
+                loc_y += fl;
                 segments.push(next);
             }
             Direction::R => {
-                let next = Segment::Horizontal(loc_x, loc_x + *l, loc_y);
-                loc_x += *l;
+                let next = Segment::Horizontal(loc_x, loc_x + fl, loc_y);
+                loc_x += fl;
                 segments.push(next);
             }
             Direction::L => {
-                let next = Segment::Horizontal(loc_x - *l, loc_x, loc_y);
-                loc_x -= *l;
+                let next = Segment::Horizontal(loc_x, loc_x - fl, loc_y);
+                loc_x -= fl;
                 segments.push(next);
             }
         }
@@ -57,8 +62,8 @@ fn wires_to_segments(wires: &Wires) -> Vec<Segment> {
     segments
 }
 
-fn all_crossings(w1: Wires, w2: Wires) -> Vec<(i32, i32)> {
-    let mut crossings: Vec<(i32, i32)> = vec![];
+fn all_crossings(w1: Wires, w2: Wires) -> Vec<Point> {
+    let mut crossings: Vec<Point> = vec![];
 
     let ss1 = wires_to_segments(&w1);
     let ss2 = wires_to_segments(&w2);
@@ -74,10 +79,10 @@ fn all_crossings(w1: Wires, w2: Wires) -> Vec<(i32, i32)> {
     crossings
 }
 
-pub fn part1() -> i32 {
+pub fn part1() -> f64 {
     let (wires1, wires2) = read_input().unwrap();
     let cs = all_crossings(wires1, wires2);
-    let d = cs.iter().map(|(x, y)| x.abs() + y.abs()).min().unwrap();
+    let d = cs.iter().map(|(x, y)| x.abs() + y.abs()).fold(1_000_000f64, |x, y| x.min(y));
     d
 }
 
