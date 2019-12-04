@@ -127,7 +127,7 @@ fn test_crossings() {
 
     let x = cs
         .into_iter()
-        .map(|(x, y)| x.abs() + y.abs())
+        .map(|(_, (x, y))| x.abs() + y.abs())
         .fold(1_000_000f64, |x, y| x.min(y));
 
     assert_eq!(x, 159.);
