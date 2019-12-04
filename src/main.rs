@@ -1,6 +1,7 @@
 use std::io;
 
 fn main() -> io::Result<()> {
-    advent::day03::print_answers();
+    println!("{}", advent::day04::part1());
+    println!("{}", advent::day04::part2());
     Ok(())
 }
