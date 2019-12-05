@@ -167,14 +167,14 @@ fn execute_instruction(program: &mut Vec<isize>, ip: isize) -> Result<Option<isi
         Instruction::LessThan(i1, i2, i3) => {
             let x1 = read_parameter(i1, program)?;
             let x2 = read_parameter(i2, program)?;
-            let result = if x1 < x2 {1} else {0};
+            let result = if x1 < x2 { 1 } else { 0 };
             program[i3 as usize] = result;
             Ok(Some(ip + inst.size()))
         }
         Instruction::Equals(i1, i2, i3) => {
             let x1 = read_parameter(i1, program)?;
             let x2 = read_parameter(i2, program)?;
-            let result = if x1 == x2 {1} else {0};
+            let result = if x1 == x2 { 1 } else { 0 };
             program[i3 as usize] = result;
             Ok(Some(ip + inst.size()))
         }
@@ -199,40 +199,6 @@ pub fn part1() -> io::Result<isize> {
     let mut x = read_input()?;
     let result = execute_until_termination(&mut x).unwrap();
     Ok(result)
-}
-
-fn execute_with_input(program: &[isize], x1: isize, x2: isize) -> Result<isize, &'static str> {
-    let mut prog_copy: Vec<isize> = program.to_vec();
-    prog_copy[1] = x1;
-    prog_copy[2] = x2;
-    execute_until_termination(&mut prog_copy)
-}
-
-use clap::{value_t_or_exit, App, Arg};
-pub fn part2_manual() -> io::Result<isize> {
-    let matches = App::new("run computer")
-        .arg(Arg::with_name("x0"))
-        .arg(Arg::with_name("x1"))
-        .get_matches();
-    let x0 = value_t_or_exit!(matches, "x0", isize);
-    let x1 = value_t_or_exit!(matches, "x1", isize);
-
-    let x = read_input()?;
-    let result = execute_with_input(&x, x0, x1).unwrap();
-    Ok(result)
-}
-
-pub fn part2() -> io::Result<(isize, isize)> {
-    let x = read_input()?;
-    for x1 in 0..100 {
-        for x2 in 0..100 {
-            let result = execute_with_input(&x, x1, x2).unwrap();
-            if result == 1969_0720 {
-                return Ok((x1, x2));
-            }
-        }
-    }
-    Err(io::Error::new(io::ErrorKind::Other, "not found"))
 }
 
 #[test]
