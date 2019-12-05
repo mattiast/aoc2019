@@ -11,24 +11,24 @@ pub fn read_input() -> io::Result<Vec<isize>> {
 }
 
 #[derive(Clone, Copy)]
-enum ParameterMode {
-    Positional,
-    Immediate,
+enum Parameter {
+    Positional(usize),
+    Immediate(isize),
 }
 
 enum Instruction {
-    Add((isize, ParameterMode), (isize, ParameterMode), isize),
-    Mul((isize, ParameterMode), (isize, ParameterMode), isize),
+    Add(Parameter, Parameter, isize),
+    Mul(Parameter, Parameter, isize),
     Input(isize),
-    Output((isize, ParameterMode)),
+    Output(Parameter),
     Terminate,
 }
 
 impl Instruction {
     fn size(&self) -> isize {
         match self {
-            Instruction::Add(_,_,_) => 4,
-            Instruction::Mul(_,_,_) => 4,
+            Instruction::Add(_, _, _) => 4,
+            Instruction::Mul(_, _, _) => 4,
             Instruction::Input(_) => 2,
             Instruction::Output(_) => 2,
             Instruction::Terminate => 1,
@@ -36,54 +36,54 @@ impl Instruction {
     }
 }
 
-fn parse_parameter_mode(x: isize) -> Result<ParameterMode, &'static str> {
-    match x {
-        0 => Ok(ParameterMode::Positional),
-        1 => Ok(ParameterMode::Immediate),
+fn parse_parameter(
+    program: &[isize],
+    addr: usize,
+    mode_code: usize,
+) -> Result<Parameter, &'static str> {
+    let x = *program.get(addr).ok_or("out of bounds")?;
+    match mode_code {
+        0 => Ok(Parameter::Positional(x as usize)),
+        1 => Ok(Parameter::Immediate(x)),
         _ => Err("unknown parameter mode"),
     }
 }
 
 fn parse_instruction(program: &[isize], ip: usize) -> Result<Instruction, &'static str> {
-    let val0 = *program.get(ip).ok_or("out of bounds")?;
+    let val0 = *program.get(ip).ok_or("out of bounds")? as usize;
     let opcode = val0 % 100;
     if opcode == 99 {
         return Ok(Instruction::Terminate);
     }
     if opcode == 1 {
-        let x1 = *program.get(ip + 1).ok_or("out of bounds")?;
-        let pm1 = parse_parameter_mode((val0 / 100) % 10)?;
-        let x2 = *program.get(ip + 2).ok_or("out of bounds")?;
-        let pm2 = parse_parameter_mode((val0 / 1000) % 10)?;
+        let p1 = parse_parameter(program, ip + 1, (val0 / 100) % 10)?;
+        let p2 = parse_parameter(program, ip + 2, (val0 / 1000) % 10)?;
         let x3 = *program.get(ip + 3).ok_or("out of bounds")?;
-        return Ok(Instruction::Add((x1, pm1), (x2, pm2), x3));
+        return Ok(Instruction::Add(p1, p2, x3));
     }
     if opcode == 2 {
-        let x1 = *program.get(ip + 1).ok_or("out of bounds")?;
-        let pm1 = parse_parameter_mode((val0 / 100) % 10)?;
-        let x2 = *program.get(ip + 2).ok_or("out of bounds")?;
-        let pm2 = parse_parameter_mode((val0 / 1000) % 10)?;
+        let p1 = parse_parameter(program, ip + 1, (val0 / 100) % 10)?;
+        let p2 = parse_parameter(program, ip + 2, (val0 / 1000) % 10)?;
         let x3 = *program.get(ip + 3).ok_or("out of bounds")?;
-        return Ok(Instruction::Mul((x1, pm1), (x2, pm2), x3));
+        return Ok(Instruction::Mul(p1, p2, x3));
     }
     if opcode == 3 {
         let x1 = *program.get(ip + 1).ok_or("out of bounds")?;
         return Ok(Instruction::Input(x1));
     }
     if opcode == 4 {
-        let x1 = *program.get(ip + 1).ok_or("out of bounds")?;
-        let pm1 = parse_parameter_mode((val0 / 100) % 10)?;
-        return Ok(Instruction::Output((x1, pm1)));
+        let p1 = parse_parameter(program, ip + 1, (val0 / 100) % 10)?;
+        return Ok(Instruction::Output(p1));
     }
     Err("invalid opcode")
 }
 
-fn read_parameter((a, pm): (isize, ParameterMode), program: &[isize]) -> Result<isize, &'static str> {
-    match pm {
-        ParameterMode::Immediate => Ok(a),
-        ParameterMode::Positional => {
-            let x1 = program.get(a as usize).ok_or("out of bounds")?;
-            Ok(*x1)
+fn read_parameter(p: Parameter, program: &[isize]) -> Result<isize, &'static str> {
+    match p {
+        Parameter::Immediate(x) => Ok(x),
+        Parameter::Positional(a) => {
+            let x = program.get(a).ok_or("out of bounds")?;
+            Ok(*x)
         }
     }
 }
