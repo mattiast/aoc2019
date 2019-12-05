@@ -10,17 +10,22 @@ pub fn read_input() -> io::Result<Vec<isize>> {
     Ok(numbers)
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 enum Parameter {
     Positional(usize),
     Immediate(isize),
 }
 
+#[derive(Debug)]
 enum Instruction {
     Add(Parameter, Parameter, isize),
     Mul(Parameter, Parameter, isize),
     Input(isize),
     Output(Parameter),
+    JumpIfTrue(Parameter, Parameter),
+    JumpIfFalse(Parameter, Parameter),
+    LessThan(Parameter, Parameter, isize),
+    Equals(Parameter, Parameter, isize),
     Terminate,
 }
 
@@ -31,6 +36,10 @@ impl Instruction {
             Instruction::Mul(_, _, _) => 4,
             Instruction::Input(_) => 2,
             Instruction::Output(_) => 2,
+            Instruction::JumpIfTrue(_, _) => 3,
+            Instruction::JumpIfFalse(_, _) => 3,
+            Instruction::LessThan(_, _, _) => 4,
+            Instruction::Equals(_, _, _) => 4,
             Instruction::Terminate => 1,
         }
     }
@@ -75,6 +84,28 @@ fn parse_instruction(program: &[isize], ip: usize) -> Result<Instruction, &'stat
         let p1 = parse_parameter(program, ip + 1, (val0 / 100) % 10)?;
         return Ok(Instruction::Output(p1));
     }
+    if opcode == 5 {
+        let p1 = parse_parameter(program, ip + 1, (val0 / 100) % 10)?;
+        let p2 = parse_parameter(program, ip + 2, (val0 / 1000) % 10)?;
+        return Ok(Instruction::JumpIfTrue(p1, p2));
+    }
+    if opcode == 6 {
+        let p1 = parse_parameter(program, ip + 1, (val0 / 100) % 10)?;
+        let p2 = parse_parameter(program, ip + 2, (val0 / 1000) % 10)?;
+        return Ok(Instruction::JumpIfFalse(p1, p2));
+    }
+    if opcode == 7 {
+        let p1 = parse_parameter(program, ip + 1, (val0 / 100) % 10)?;
+        let p2 = parse_parameter(program, ip + 2, (val0 / 1000) % 10)?;
+        let x3 = *program.get(ip + 3).ok_or("out of bounds")?;
+        return Ok(Instruction::LessThan(p1, p2, x3));
+    }
+    if opcode == 8 {
+        let p1 = parse_parameter(program, ip + 1, (val0 / 100) % 10)?;
+        let p2 = parse_parameter(program, ip + 2, (val0 / 1000) % 10)?;
+        let x3 = *program.get(ip + 3).ok_or("out of bounds")?;
+        return Ok(Instruction::Equals(p1, p2, x3));
+    }
     Err("invalid opcode")
 }
 
@@ -105,7 +136,7 @@ fn execute_instruction(program: &mut Vec<isize>, ip: isize) -> Result<Option<isi
             Ok(Some(ip + inst.size()))
         }
         Instruction::Input(i1) => {
-            let hc_in = 1;
+            let hc_in = 5;
             println!("input asked, giving {}", hc_in);
             program[i1 as usize] = hc_in;
             Ok(Some(ip + inst.size()))
@@ -113,6 +144,38 @@ fn execute_instruction(program: &mut Vec<isize>, ip: isize) -> Result<Option<isi
         Instruction::Output(i1) => {
             let x1 = read_parameter(i1, program)?;
             println!("output: {}", x1);
+            Ok(Some(ip + inst.size()))
+        }
+        Instruction::JumpIfTrue(i1, i2) => {
+            let x1 = read_parameter(i1, program)?;
+            if x1 != 0 {
+                let x2 = read_parameter(i2, program)?;
+                Ok(Some(x2))
+            } else {
+                Ok(Some(ip + inst.size()))
+            }
+        }
+        Instruction::JumpIfFalse(i1, i2) => {
+            let x1 = read_parameter(i1, program)?;
+            if x1 == 0 {
+                let x2 = read_parameter(i2, program)?;
+                Ok(Some(x2))
+            } else {
+                Ok(Some(ip + inst.size()))
+            }
+        }
+        Instruction::LessThan(i1, i2, i3) => {
+            let x1 = read_parameter(i1, program)?;
+            let x2 = read_parameter(i2, program)?;
+            let result = if x1 < x2 {1} else {0};
+            program[i3 as usize] = result;
+            Ok(Some(ip + inst.size()))
+        }
+        Instruction::Equals(i1, i2, i3) => {
+            let x1 = read_parameter(i1, program)?;
+            let x2 = read_parameter(i2, program)?;
+            let result = if x1 == x2 {1} else {0};
+            program[i3 as usize] = result;
             Ok(Some(ip + inst.size()))
         }
     }
