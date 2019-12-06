@@ -19,6 +19,7 @@ pub fn read_input() -> io::Result<Vec<(String, String)>> {
 
 pub struct Tree {
     pub children: HashMap<String, HashSet<String>>,
+    pub parents: HashMap<String, String>,
 }
 
 impl Tree {
@@ -29,8 +30,10 @@ impl Tree {
 
 pub fn tree_stuff(input: Vec<(String, String)>) -> Tree {
     let mut children: HashMap<String, HashSet<String>> = HashMap::new();
+    let mut parents: HashMap<String, String> = HashMap::new();
 
     for (x, y) in input {
+        parents.insert(y.clone(), x.clone());
         match children.get_mut(&x) {
             Some(s) => {
                 s.insert(y);
@@ -43,7 +46,8 @@ pub fn tree_stuff(input: Vec<(String, String)>) -> Tree {
         }
     }
     Tree {
-        children
+        children,
+        parents,
     }
 }
 
@@ -76,4 +80,10 @@ pub fn run_stuff() {
 
     let total: usize = depths.iter().map(|(_, y)| *y).sum();
     println!("total {}", total);
+
+    let mut node = "YOU";
+    while let Some(parent) = tree.parents.get(node) {
+        println!("{} -> {}", node, parent);
+        node = parent;
+    }
 }
