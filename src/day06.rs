@@ -1,5 +1,22 @@
 use std::collections::{HashMap, HashSet};
 
+use std::fs::File;
+use std::io::{self, prelude::BufRead, BufReader};
+pub fn read_input() -> io::Result<Vec<(String, String)>> {
+    let file = File::open("data/input06.txt")?;
+    let reader = BufReader::new(file);
+
+    let mut result: Vec<(String, String)> = vec![];
+    for line in reader.lines() {
+        let rline = line?;
+        let mut stars = rline.split(')');
+        let x = stars.next().unwrap();
+        let y = stars.next().unwrap();
+        result.push((x.to_owned(), y.to_owned()));
+    }
+    Ok(result)
+}
+
 type Tree = HashMap<String, HashSet<String>>;
 
 pub fn tree_stuff(input: Vec<(String, String)>) -> Tree {
@@ -40,23 +57,6 @@ fn find_depths(t: &Tree, root: String) -> HashMap<String, usize> {
     }
 
     depths
-}
-
-use std::fs::File;
-use std::io::{self, prelude::BufRead, BufReader};
-pub fn read_input() -> io::Result<Vec<(String, String)>> {
-    let file = File::open("data/input06.txt")?;
-    let reader = BufReader::new(file);
-
-    let mut result: Vec<(String, String)> = vec![];
-    for line in reader.lines() {
-        let rline = line?;
-        let mut stars = rline.split(')');
-        let x = stars.next().unwrap();
-        let y = stars.next().unwrap();
-        result.push((x.to_owned(), y.to_owned()));
-    }
-    Ok(result)
 }
 
 pub fn run_stuff() {
