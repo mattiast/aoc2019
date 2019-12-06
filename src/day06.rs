@@ -73,6 +73,29 @@ fn find_depths(t: &Tree, root: String) -> HashMap<String, usize> {
     depths
 }
 
+fn find_ancestors<'a>(tree: &'a Tree, mut node: &'a str) -> HashMap<String, usize> {
+    let mut depths: HashMap<String, usize> = HashMap::new();
+    let mut d = 0;
+    while let Some(parent) = tree.parents.get(node) {
+        node = parent;
+        d += 1;
+        depths.insert(node.to_owned(), d);
+    }
+    depths
+}
+
+fn find_distance<'a>(tree: &'a Tree, node1: &'a str, node2: &'a str) -> usize {
+    let a1 = find_ancestors(&tree, node1);
+    let a2 = find_ancestors(&tree, node2);
+
+    let s1: HashSet<String> = a1.keys().cloned().collect();
+    let s2: HashSet<String> = a2.keys().cloned().collect();
+
+    s1.intersection(&s2).map(|node| {
+        a1.get(node).unwrap() + a2.get(node).unwrap()
+    }).min().unwrap()
+}
+
 pub fn run_stuff() {
     let input = read_input().unwrap();
     let tree = tree_stuff(input);
@@ -81,9 +104,6 @@ pub fn run_stuff() {
     let total: usize = depths.iter().map(|(_, y)| *y).sum();
     println!("total {}", total);
 
-    let mut node = "YOU";
-    while let Some(parent) = tree.parents.get(node) {
-        println!("{} -> {}", node, parent);
-        node = parent;
-    }
+    let dist = find_distance(&tree, "YOU", "SAN");
+    println!("distance = {}", dist - 2);
 }
