@@ -17,10 +17,18 @@ pub fn read_input() -> io::Result<Vec<(String, String)>> {
     Ok(result)
 }
 
-type Tree = HashMap<String, HashSet<String>>;
+pub struct Tree {
+    pub children: HashMap<String, HashSet<String>>,
+}
+
+impl Tree {
+    fn get_children(&self, node: String) -> Option<&HashSet<String>> {
+        self.children.get(&node)
+    }
+}
 
 pub fn tree_stuff(input: Vec<(String, String)>) -> Tree {
-    let mut children: Tree = HashMap::new();
+    let mut children: HashMap<String, HashSet<String>> = HashMap::new();
 
     for (x, y) in input {
         match children.get_mut(&x) {
@@ -34,7 +42,9 @@ pub fn tree_stuff(input: Vec<(String, String)>) -> Tree {
             }
         }
     }
-    children
+    Tree {
+        children
+    }
 }
 
 fn find_depths(t: &Tree, root: String) -> HashMap<String, usize> {
@@ -47,7 +57,7 @@ fn find_depths(t: &Tree, root: String) -> HashMap<String, usize> {
     while !to_process.is_empty() {
         let node = to_process.pop().unwrap();
         let d = *depths.get(&node).unwrap();
-        let mcs = t.get(&node);
+        let mcs = t.get_children(node);
         if let Some(cs) = mcs {
             for c in cs {
                 depths.insert(c.clone(), d + 1);
