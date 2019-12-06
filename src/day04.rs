@@ -1,3 +1,4 @@
+#![allow(clippy::unreadable_literal)]
 use itertools::Itertools;
 
 fn admissible_password(w: u64) -> bool {

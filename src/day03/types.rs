@@ -6,7 +6,7 @@ pub enum Direction {
     U,
 }
 
-pub type Wires = Vec<(Direction, i32)>;
+pub type Wire = (Direction, i32);
 
 pub type Point = (f64, f64);
 

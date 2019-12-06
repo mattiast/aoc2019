@@ -32,7 +32,7 @@ fn crossing(s1: Segment, s2: Segment) -> Option<(f64, f64, Point)> {
     }
 }
 
-fn wires_to_segments(wires: &Wires) -> Vec<(f64, Segment)> {
+fn wires_to_segments(wires: &[Wire]) -> Vec<(f64, Segment)> {
     let mut loc_x: f64 = 0.;
     let mut loc_y: f64 = 0.;
     let mut dist: f64 = 0.0;
@@ -68,7 +68,7 @@ fn wires_to_segments(wires: &Wires) -> Vec<(f64, Segment)> {
     segments
 }
 
-fn all_crossings(w1: Wires, w2: Wires) -> Vec<(f64, Point)> {
+fn all_crossings(w1: Vec<Wire>, w2: Vec<Wire>) -> Vec<(f64, Point)> {
     let mut crossings: Vec<(f64, Point)> = vec![];
 
     let ss1 = wires_to_segments(&w1);
@@ -102,7 +102,7 @@ pub fn print_answers() {
 
 #[test]
 fn test_crossings() {
-    let wires1: Wires = vec![
+    let wires1 = vec![
         (Direction::R, 75),
         (Direction::D, 30),
         (Direction::R, 83),
@@ -113,7 +113,7 @@ fn test_crossings() {
         (Direction::U, 7),
         (Direction::L, 72),
     ];
-    let wires2: Wires = vec![
+    let wires2 = vec![
         (Direction::U, 62),
         (Direction::R, 66),
         (Direction::U, 55),
@@ -130,5 +130,5 @@ fn test_crossings() {
         .map(|(_, (x, y))| x.abs() + y.abs())
         .fold(1_000_000f64, |x, y| x.min(y));
 
-    assert_eq!(x, 159.);
+    assert!((x- 159.).abs() < 1e-10);
 }

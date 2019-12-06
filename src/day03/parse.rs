@@ -1,11 +1,11 @@
-use super::types::{Direction, Wires};
+use super::types::{Direction, Wire};
 use std::fs::File;
 use std::io;
 use std::io::prelude::BufRead;
 use std::io::BufReader;
 
-fn parse_wires(buf: &str) -> Wires {
-    let mut wires: Wires = vec![];
+fn parse_wires(buf: &str) -> Vec<Wire> {
+    let mut wires: Vec<Wire> = vec![];
     for wire in buf.split(',') {
         let chars: Vec<char> = wire.chars().collect();
         let dir = match chars[0] {
@@ -23,7 +23,7 @@ fn parse_wires(buf: &str) -> Wires {
     wires
 }
 
-pub fn read_input() -> io::Result<(Wires, Wires)> {
+pub fn read_input() -> io::Result<(Vec<Wire>, Vec<Wire>)> {
     let file = File::open("data/input03.txt")?;
     let mut reader = BufReader::new(file);
 
