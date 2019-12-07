@@ -232,7 +232,7 @@ fn get_output(program: &[isize], phase: isize, input: isize) -> Result<isize, &'
     execute_until_termination(&mut prog_copy, vec![phase, input])
 }
 
-fn get_5_stage(program: &[isize], phases: [isize ; 5]) -> Result<isize, &'static str> {
+fn get_5_stage(program: &[isize], phases: [isize; 5]) -> Result<isize, &'static str> {
     let x1 = get_output(&program, phases[0], 0)?;
     let x2 = get_output(&program, phases[1], x1)?;
     let x3 = get_output(&program, phases[2], x2)?;
@@ -261,4 +261,15 @@ pub fn part1() -> io::Result<()> {
     println!("result = {}", result);
 
     Ok(())
+}
+
+#[test]
+fn test_5_stage() {
+    let prog = &[
+        3, 31, 3, 32, 1002, 32, 10, 32, 1001, 31, -2, 31, 1007, 31, 0, 33, 1002, 33, 7, 33, 1, 33,
+        31, 31, 1, 32, 31, 31, 4, 31, 99, 0, 0, 0,
+    ];
+    let phases = [1, 0, 4, 3, 2];
+
+    assert_eq!(get_5_stage(prog, phases), Ok(65210));
 }
