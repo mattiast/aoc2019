@@ -130,5 +130,5 @@ fn test_crossings() {
         .map(|(_, (x, y))| x.abs() + y.abs())
         .fold(1_000_000f64, |x, y| x.min(y));
 
-    assert!((x- 159.).abs() < 1e-10);
+    assert!((x - 159.).abs() < 1e-10);
 }

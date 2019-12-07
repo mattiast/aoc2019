@@ -45,10 +45,7 @@ pub fn tree_stuff(input: Vec<(String, String)>) -> Tree {
             }
         }
     }
-    Tree {
-        children,
-        parents,
-    }
+    Tree { children, parents }
 }
 
 fn find_depths(t: &Tree, root: String) -> HashMap<String, usize> {
@@ -91,9 +88,10 @@ fn find_distance<'a>(tree: &'a Tree, node1: &'a str, node2: &'a str) -> usize {
     let s1: HashSet<String> = a1.keys().cloned().collect();
     let s2: HashSet<String> = a2.keys().cloned().collect();
 
-    s1.intersection(&s2).map(|node| {
-        a1.get(node).unwrap() + a2.get(node).unwrap()
-    }).min().unwrap()
+    s1.intersection(&s2)
+        .map(|node| a1.get(node).unwrap() + a2.get(node).unwrap())
+        .min()
+        .unwrap()
 }
 
 pub fn run_stuff() {
