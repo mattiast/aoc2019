@@ -191,3 +191,12 @@ where
         }
     }
 }
+
+#[test]
+fn test_execute_instruction() {
+    let mut program: Vec<isize> = vec![2, 4, 4, 5, 99, 0];
+    let inst = parse_instruction(&program, 0).unwrap();
+    let mut iter = (vec![]).into_iter();
+    execute_instruction(&mut program, 0, inst, &mut iter).unwrap();
+    assert_eq!(program[5], 9801);
+}

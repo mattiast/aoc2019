@@ -1,6 +1,9 @@
 use std::io;
 
 fn main() -> io::Result<()> {
-    advent::day07::part1()?;
+    let r = advent::day05::part1()?;
+    println!("output = {:?}", r);
+    let r = advent::day05::part2()?;
+    println!("output = {:?}", r);
     Ok(())
 }
