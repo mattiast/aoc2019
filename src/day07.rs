@@ -163,7 +163,10 @@ where
         }
         Instruction::Output(i1) => {
             let x1 = read_parameter(i1, program)?;
-            Ok(ER::Continue { next: ip + inst.size(), output: Some(x1) } )
+            Ok(ER::Continue {
+                next: ip + inst.size(),
+                output: Some(x1),
+            })
         }
         Instruction::JumpIfTrue(i1, i2) => {
             let x1 = read_parameter(i1, program)?;
@@ -200,7 +203,10 @@ where
     }
 }
 
-fn execute_until_termination(program: &mut Vec<isize>, inputs: Vec<isize>) -> Result<isize, &'static str> {
+fn execute_until_termination(
+    program: &mut Vec<isize>,
+    inputs: Vec<isize>,
+) -> Result<isize, &'static str> {
     let mut ip: isize = 0;
     let mut outs: Vec<isize> = vec![];
     let mut iter = inputs.into_iter();
@@ -221,18 +227,38 @@ fn execute_until_termination(program: &mut Vec<isize>, inputs: Vec<isize>) -> Re
     Ok(outs[0])
 }
 
-use clap::{value_t_or_exit, App, Arg};
-pub fn part1() -> io::Result<isize> {
-    let matches = App::new("run computer")
-        .arg(Arg::with_name("x0"))
-        .arg(Arg::with_name("x1"))
-        .get_matches();
-    let x0 = value_t_or_exit!(matches, "x0", isize);
-    let x1 = value_t_or_exit!(matches, "x1", isize);
+fn get_output(program: &[isize], phase: isize, input: isize) -> Result<isize, &'static str> {
+    let mut prog_copy = Vec::from(program);
+    execute_until_termination(&mut prog_copy, vec![phase, input])
+}
 
-    let mut x = read_input()?;
-    let result = execute_until_termination(&mut x, vec![x0, x1]).unwrap();
+fn get_5_stage(program: &[isize], phases: [isize ; 5]) -> Result<isize, &'static str> {
+    let x1 = get_output(&program, phases[0], 0)?;
+    let x2 = get_output(&program, phases[1], x1)?;
+    let x3 = get_output(&program, phases[2], x2)?;
+    let x4 = get_output(&program, phases[3], x3)?;
+    let x5 = get_output(&program, phases[4], x4)?;
+    Ok(x5)
+}
+
+use clap::{value_t_or_exit, App, Arg};
+pub fn part1() -> io::Result<()> {
+    let matches = App::new("run computer")
+        .arg(Arg::with_name("p0"))
+        .arg(Arg::with_name("p1"))
+        .arg(Arg::with_name("p2"))
+        .arg(Arg::with_name("p3"))
+        .arg(Arg::with_name("p4"))
+        .get_matches();
+    let p0 = value_t_or_exit!(matches, "p0", isize);
+    let p1 = value_t_or_exit!(matches, "p1", isize);
+    let p2 = value_t_or_exit!(matches, "p2", isize);
+    let p3 = value_t_or_exit!(matches, "p3", isize);
+    let p4 = value_t_or_exit!(matches, "p4", isize);
+
+    let prog = read_input()?;
+    let result = get_5_stage(&prog, [p0, p1, p2, p3, p4]).unwrap();
     println!("result = {}", result);
 
-    Ok(result)
+    Ok(())
 }
