@@ -1,6 +1,6 @@
+use crate::intcode::{execute_instruction, parse_instruction, ER};
 use std::fs::File;
 use std::io::{self, prelude::BufRead, BufReader};
-use crate::intcode::{execute_instruction, ER, parse_instruction};
 
 pub fn read_input() -> io::Result<Vec<isize>> {
     let file = File::open("data/input07.txt")?;
@@ -55,10 +55,11 @@ use permutator::Permutation;
 pub fn part1() -> io::Result<()> {
     let prog = read_input()?;
 
-    let mut data = vec![0,1,2,3,4];
-    let max_output = data.permutation().map(|x| {
-        get_5_stage(&prog, &x).unwrap()
-    }).max();
+    let mut data = vec![0, 1, 2, 3, 4];
+    let max_output = data
+        .permutation()
+        .map(|x| get_5_stage(&prog, &x).unwrap())
+        .max();
 
     println!("{:?}", max_output);
 
