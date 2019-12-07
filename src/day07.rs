@@ -232,7 +232,7 @@ fn get_output(program: &[isize], phase: isize, input: isize) -> Result<isize, &'
     execute_until_termination(&mut prog_copy, vec![phase, input])
 }
 
-fn get_5_stage(program: &[isize], phases: [isize; 5]) -> Result<isize, &'static str> {
+fn get_5_stage(program: &[isize], phases: &[isize]) -> Result<isize, &'static str> {
     let x1 = get_output(&program, phases[0], 0)?;
     let x2 = get_output(&program, phases[1], x1)?;
     let x3 = get_output(&program, phases[2], x2)?;
@@ -241,24 +241,16 @@ fn get_5_stage(program: &[isize], phases: [isize; 5]) -> Result<isize, &'static 
     Ok(x5)
 }
 
-use clap::{value_t_or_exit, App, Arg};
+use permutator::Permutation;
 pub fn part1() -> io::Result<()> {
-    let matches = App::new("run computer")
-        .arg(Arg::with_name("p0"))
-        .arg(Arg::with_name("p1"))
-        .arg(Arg::with_name("p2"))
-        .arg(Arg::with_name("p3"))
-        .arg(Arg::with_name("p4"))
-        .get_matches();
-    let p0 = value_t_or_exit!(matches, "p0", isize);
-    let p1 = value_t_or_exit!(matches, "p1", isize);
-    let p2 = value_t_or_exit!(matches, "p2", isize);
-    let p3 = value_t_or_exit!(matches, "p3", isize);
-    let p4 = value_t_or_exit!(matches, "p4", isize);
-
     let prog = read_input()?;
-    let result = get_5_stage(&prog, [p0, p1, p2, p3, p4]).unwrap();
-    println!("result = {}", result);
+
+    let mut data = vec![0,1,2,3,4];
+    let max_output = data.permutation().map(|x| {
+        get_5_stage(&prog, &x).unwrap()
+    }).max();
+
+    println!("{:?}", max_output);
 
     Ok(())
 }
@@ -269,7 +261,7 @@ fn test_5_stage() {
         3, 31, 3, 32, 1002, 32, 10, 32, 1001, 31, -2, 31, 1007, 31, 0, 33, 1002, 33, 7, 33, 1, 33,
         31, 31, 1, 32, 31, 31, 4, 31, 99, 0, 0, 0,
     ];
-    let phases = [1, 0, 4, 3, 2];
+    let phases = &[1, 0, 4, 3, 2];
 
     assert_eq!(get_5_stage(prog, phases), Ok(65210));
 }
