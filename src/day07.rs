@@ -136,12 +136,12 @@ impl ER {
 fn execute_instruction<I>(
     program: &mut Vec<isize>,
     ip: isize,
+    inst: Instruction,
     inputs: &mut I,
 ) -> Result<ER, &'static str>
 where
     I: Iterator<Item = isize>,
 {
-    let inst = parse_instruction(&program, ip as usize)?;
     match inst {
         Instruction::Terminate => Ok(ER::Terminate),
         Instruction::Add(i1, i2, i3) => {
@@ -211,7 +211,8 @@ fn execute_until_termination(
     let mut outs: Vec<isize> = vec![];
     let mut iter = inputs.into_iter();
     loop {
-        let new_ip = execute_instruction(program, ip, &mut iter)?;
+        let inst = parse_instruction(&program, ip as usize)?;
+        let new_ip = execute_instruction(program, ip, inst, &mut iter)?;
         match new_ip {
             ER::Terminate => break,
             ER::Continue { next, output } => {
