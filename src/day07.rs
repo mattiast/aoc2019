@@ -126,11 +126,21 @@ enum ER {
 
 impl ER {
     fn next(addr: isize) -> ER {
-        ER::Continue {next: addr, output: None}
+        ER::Continue {
+            next: addr,
+            output: None,
+        }
     }
 }
 
-fn execute_instruction(program: &mut Vec<isize>, ip: isize) -> Result<ER, &'static str> {
+fn execute_instruction<I>(
+    program: &mut Vec<isize>,
+    ip: isize,
+    inputs: &mut I,
+) -> Result<ER, &'static str>
+where
+    I: Iterator<Item = isize>,
+{
     let inst = parse_instruction(&program, ip as usize)?;
     match inst {
         Instruction::Terminate => Ok(ER::Terminate),
@@ -147,15 +157,13 @@ fn execute_instruction(program: &mut Vec<isize>, ip: isize) -> Result<ER, &'stat
             Ok(ER::next(ip + inst.size()))
         }
         Instruction::Input(i1) => {
-            let hc_in = 5;
-            println!("input asked, giving {}", hc_in);
-            program[i1 as usize] = hc_in;
+            let input = inputs.next().ok_or("ran out of inputs")?;
+            program[i1 as usize] = input;
             Ok(ER::next(ip + inst.size()))
         }
         Instruction::Output(i1) => {
             let x1 = read_parameter(i1, program)?;
-            println!("output: {}", x1);
-            Ok(ER::next(ip + inst.size()))
+            Ok(ER::Continue { next: ip + inst.size(), output: Some(x1) } )
         }
         Instruction::JumpIfTrue(i1, i2) => {
             let x1 = read_parameter(i1, program)?;
@@ -192,14 +200,15 @@ fn execute_instruction(program: &mut Vec<isize>, ip: isize) -> Result<ER, &'stat
     }
 }
 
-fn execute_until_termination(program: &mut Vec<isize>) -> Result<isize, &'static str> {
+fn execute_until_termination(program: &mut Vec<isize>, inputs: Vec<isize>) -> Result<isize, &'static str> {
     let mut ip: isize = 0;
     let mut outs: Vec<isize> = vec![];
+    let mut iter = inputs.into_iter();
     loop {
-        let new_ip = execute_instruction(program, ip)?;
+        let new_ip = execute_instruction(program, ip, &mut iter)?;
         match new_ip {
             ER::Terminate => break,
-            ER::Continue {next, output} => {
+            ER::Continue { next, output } => {
                 ip = next;
                 if let Some(out) = output {
                     outs.push(out);
@@ -207,18 +216,23 @@ fn execute_until_termination(program: &mut Vec<isize>) -> Result<isize, &'static
             }
         }
     }
-    Ok(program[0])
+    assert!(iter.next() == None);
+    assert!(outs.len() == 1);
+    Ok(outs[0])
 }
 
+use clap::{value_t_or_exit, App, Arg};
 pub fn part1() -> io::Result<isize> {
-    let mut x = read_input()?;
-    let result = execute_until_termination(&mut x).unwrap();
-    Ok(result)
-}
+    let matches = App::new("run computer")
+        .arg(Arg::with_name("x0"))
+        .arg(Arg::with_name("x1"))
+        .get_matches();
+    let x0 = value_t_or_exit!(matches, "x0", isize);
+    let x1 = value_t_or_exit!(matches, "x1", isize);
 
-#[test]
-fn test_execute_instruction() {
-    let mut program: Vec<isize> = vec![2, 4, 4, 5, 99, 0];
-    execute_instruction(&mut program, 0).unwrap();
-    assert_eq!(program[5], 9801);
+    let mut x = read_input()?;
+    let result = execute_until_termination(&mut x, vec![x0, x1]).unwrap();
+    println!("result = {}", result);
+
+    Ok(result)
 }
