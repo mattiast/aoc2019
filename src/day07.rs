@@ -1,4 +1,4 @@
-use crate::intcode::{execute_instruction, parse_instruction, ER};
+use crate::intcode::{execute_instruction, parse_instruction, ER, ProgramState};
 use std::fs::File;
 use std::io::{self, prelude::BufRead, BufReader};
 
@@ -16,16 +16,15 @@ fn execute_until_termination(
     program: &mut Vec<isize>,
     inputs: Vec<isize>,
 ) -> Result<isize, &'static str> {
-    let mut ip: isize = 0;
+    let mut state = ProgramState::init(program.clone());
     let mut outs: Vec<isize> = vec![];
     let mut iter = inputs.into_iter();
     loop {
-        let inst = parse_instruction(&program, ip as usize)?;
-        let new_ip = execute_instruction(program, ip, inst, &mut iter)?;
+        let inst = parse_instruction(&state.mem, state.ip)?;
+        let new_ip = execute_instruction(&mut state, inst, &mut iter)?;
         match new_ip {
             ER::Terminate => break,
-            ER::Continue { next, output } => {
-                ip = next;
+            ER::Continue { output } => {
                 if let Some(out) = output {
                     outs.push(out);
                 }

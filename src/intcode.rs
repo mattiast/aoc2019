@@ -18,7 +18,7 @@ pub enum Instruction {
 }
 
 impl Instruction {
-    fn size(&self) -> isize {
+    fn size(&self) -> usize {
         match self {
             Instruction::Add(_, _, _) => 4,
             Instruction::Mul(_, _, _) => 4,
@@ -109,21 +109,31 @@ fn read_parameter(p: Parameter, program: &[isize]) -> Result<isize, &'static str
 
 pub enum ER {
     Terminate,
-    Continue { next: isize, output: Option<isize> },
+    Continue { output: Option<isize> },
 }
 
 impl ER {
-    fn next(addr: isize) -> ER {
-        ER::Continue {
-            next: addr,
-            output: None,
+    fn next() -> ER {
+        ER::Continue { output: None }
+    }
+}
+
+pub struct ProgramState {
+    pub mem: Vec<isize>,
+    pub ip: usize,
+}
+
+impl ProgramState {
+    pub fn init(code: Vec<isize>) -> ProgramState {
+        ProgramState {
+            mem: code,
+            ip: 0,
         }
     }
 }
 
 pub fn execute_instruction<I>(
-    program: &mut Vec<isize>,
-    ip: isize,
+    state: &mut ProgramState,
     inst: Instruction,
     inputs: &mut I,
 ) -> Result<ER, &'static str>
@@ -133,60 +143,69 @@ where
     match inst {
         Instruction::Terminate => Ok(ER::Terminate),
         Instruction::Add(i1, i2, i3) => {
-            let x1 = read_parameter(i1, program)?;
-            let x2 = read_parameter(i2, program)?;
-            program[i3 as usize] = x1 + x2;
-            Ok(ER::next(ip + inst.size()))
+            let x1 = read_parameter(i1, &state.mem)?;
+            let x2 = read_parameter(i2, &state.mem)?;
+            state.mem[i3 as usize] = x1 + x2;
+            state.ip += inst.size();
+            Ok(ER::next())
         }
         Instruction::Mul(i1, i2, i3) => {
-            let x1 = read_parameter(i1, program)?;
-            let x2 = read_parameter(i2, program)?;
-            program[i3 as usize] = x1 * x2;
-            Ok(ER::next(ip + inst.size()))
+            let x1 = read_parameter(i1, &state.mem)?;
+            let x2 = read_parameter(i2, &state.mem)?;
+            state.mem[i3 as usize] = x1 * x2;
+            state.ip += inst.size();
+            Ok(ER::next())
         }
         Instruction::Input(i1) => {
             let input = inputs.next().ok_or("ran out of inputs")?;
-            program[i1 as usize] = input;
-            Ok(ER::next(ip + inst.size()))
+            state.mem[i1 as usize] = input;
+            state.ip += inst.size();
+            Ok(ER::next())
         }
         Instruction::Output(i1) => {
-            let x1 = read_parameter(i1, program)?;
+            let x1 = read_parameter(i1, &state.mem)?;
+            state.ip += inst.size();
             Ok(ER::Continue {
-                next: ip + inst.size(),
                 output: Some(x1),
             })
         }
         Instruction::JumpIfTrue(i1, i2) => {
-            let x1 = read_parameter(i1, program)?;
+            let x1 = read_parameter(i1, &state.mem)?;
             if x1 != 0 {
-                let x2 = read_parameter(i2, program)?;
-                Ok(ER::next(x2))
+                let x2 = read_parameter(i2, &state.mem)?;
+                state.ip = x2 as usize;
+                Ok(ER::next())
             } else {
-                Ok(ER::next(ip + inst.size()))
+                state.ip += inst.size();
+                Ok(ER::next())
             }
         }
         Instruction::JumpIfFalse(i1, i2) => {
-            let x1 = read_parameter(i1, program)?;
+            let x1 = read_parameter(i1, &state.mem)?;
             if x1 == 0 {
-                let x2 = read_parameter(i2, program)?;
-                Ok(ER::next(x2))
+                let x2 = read_parameter(i2, &state.mem)?;
+                state.ip = x2 as usize;
+                Ok(ER::next())
             } else {
-                Ok(ER::next(ip + inst.size()))
+                state.ip += inst.size();
+                Ok(ER::next())
             }
         }
         Instruction::LessThan(i1, i2, i3) => {
-            let x1 = read_parameter(i1, program)?;
-            let x2 = read_parameter(i2, program)?;
+            let x1 = read_parameter(i1, &state.mem)?;
+            let x2 = read_parameter(i2, &state.mem)?;
             let result = if x1 < x2 { 1 } else { 0 };
-            program[i3 as usize] = result;
-            Ok(ER::next(ip + inst.size()))
+            state.mem[i3 as usize] = result;
+            state.ip += inst.size();
+            Ok(ER::next())
         }
         Instruction::Equals(i1, i2, i3) => {
-            let x1 = read_parameter(i1, program)?;
-            let x2 = read_parameter(i2, program)?;
+            let x1 = read_parameter(i1, &state.mem)?;
+            let x2 = read_parameter(i2, &state.mem)?;
             let result = if x1 == x2 { 1 } else { 0 };
-            program[i3 as usize] = result;
-            Ok(ER::next(ip + inst.size()))
+            state.mem[i3 as usize] = result;
+            state.ip += inst.size();
+            Ok(ER::next())
         }
     }
 }

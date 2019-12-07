@@ -5,5 +5,7 @@ fn main() -> io::Result<()> {
     println!("output = {:?}", r);
     let r = advent::day05::part2()?;
     println!("output = {:?}", r);
+
+    advent::day07::part1()?;
     Ok(())
 }
