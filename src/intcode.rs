@@ -114,20 +114,10 @@ fn read_parameter(p: Parameter, program: &[isize]) -> Result<isize, &'static str
     }
 }
 
-pub enum ER {
-    Terminate,
-    Continue { output: Option<isize> },
-}
-
-impl ER {
-    fn next() -> ER {
-        ER::Continue { output: None }
-    }
-}
-
 pub struct ProgramState {
     pub mem: Vec<isize>,
     pub ip: usize,
+    pub terminated: bool,
 }
 
 impl ProgramState {
@@ -135,6 +125,7 @@ impl ProgramState {
         ProgramState {
             mem: code,
             ip: 0,
+            terminated: false,
         }
     }
 }
@@ -143,47 +134,49 @@ pub fn execute_instruction(
     state: &mut ProgramState,
     inst: Instruction,
     input: &mut Option<isize>,
-) -> Result<ER, &'static str>
+) -> Result<Option<isize>, &'static str>
 {
+    assert!(!state.terminated);
     match inst {
-        Instruction::Terminate => Ok(ER::Terminate),
+        Instruction::Terminate => {
+            state.terminated = true;
+            Ok(None)
+        }
         Instruction::Add(i1, i2, i3) => {
             let x1 = read_parameter(i1, &state.mem)?;
             let x2 = read_parameter(i2, &state.mem)?;
             state.mem[i3] = x1 + x2;
             state.ip += inst.size();
-            Ok(ER::next())
+            Ok(None)
         }
         Instruction::Mul(i1, i2, i3) => {
             let x1 = read_parameter(i1, &state.mem)?;
             let x2 = read_parameter(i2, &state.mem)?;
             state.mem[i3] = x1 * x2;
             state.ip += inst.size();
-            Ok(ER::next())
+            Ok(None)
         }
         Instruction::Input(i1) => {
             let inpt = input.ok_or("ran out of inputs")?;
             *input = None;
             state.mem[i1] = inpt;
             state.ip += inst.size();
-            Ok(ER::next())
+            Ok(None)
         }
         Instruction::Output(i1) => {
             let x1 = read_parameter(i1, &state.mem)?;
             state.ip += inst.size();
-            Ok(ER::Continue {
-                output: Some(x1),
-            })
+            Ok(Some(x1))
         }
         Instruction::JumpIfTrue(i1, i2) => {
             let x1 = read_parameter(i1, &state.mem)?;
             if x1 != 0 {
                 let x2 = read_parameter(i2, &state.mem)?;
                 state.ip = x2 as usize;
-                Ok(ER::next())
+                Ok(None)
             } else {
                 state.ip += inst.size();
-                Ok(ER::next())
+                Ok(None)
             }
         }
         Instruction::JumpIfFalse(i1, i2) => {
@@ -191,10 +184,10 @@ pub fn execute_instruction(
             if x1 == 0 {
                 let x2 = read_parameter(i2, &state.mem)?;
                 state.ip = x2 as usize;
-                Ok(ER::next())
+                Ok(None)
             } else {
                 state.ip += inst.size();
-                Ok(ER::next())
+                Ok(None)
             }
         }
         Instruction::LessThan(i1, i2, i3) => {
@@ -203,7 +196,7 @@ pub fn execute_instruction(
             let result = if x1 < x2 { 1 } else { 0 };
             state.mem[i3] = result;
             state.ip += inst.size();
-            Ok(ER::next())
+            Ok(None)
         }
         Instruction::Equals(i1, i2, i3) => {
             let x1 = read_parameter(i1, &state.mem)?;
@@ -211,7 +204,7 @@ pub fn execute_instruction(
             let result = if x1 == x2 { 1 } else { 0 };
             state.mem[i3] = result;
             state.ip += inst.size();
-            Ok(ER::next())
+            Ok(None)
         }
     }
 }
