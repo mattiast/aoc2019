@@ -64,6 +64,59 @@ pub fn part1() -> io::Result<()> {
     Ok(())
 }
 
+fn get_5_stage_feedback(program: &[isize], phases: &[isize]) -> Result<isize, &'static str> {
+    let prog: Vec<isize> = program.to_vec();
+    let mut states: Vec<_> = (0..5).map(|_| ProgramState::init(prog.clone())).collect();
+
+    let mut inputs: Vec<Vec<isize>> = vec![
+        vec![phases[0], 0],
+        vec![phases[1]],
+        vec![phases[2]],
+        vec![phases[3]],
+        vec![phases[4]],
+    ];
+
+    loop {
+        for i in 0..5 {
+            if states[i].terminated {
+                continue;
+            }
+            let inst = parse_instruction(&states[i].mem, states[i].ip).unwrap();
+            if inst.needs_input() && inputs[i].is_empty() {
+                continue;
+            }
+            let mut inp = inputs[i].first().cloned();
+            let mout = execute_instruction(&mut states[i], inst, &mut inp).unwrap();
+            if !inputs[i].is_empty() && inp.is_none() {
+                inputs[i].remove(0);
+            }
+            if let Some(out) = mout {
+                let next_i = (i + 1) % 5;
+                inputs[next_i].push(out);
+            }
+        }
+        if states[4].terminated {
+            break;
+        }
+    }
+
+    Ok(inputs[0][0])
+}
+
+pub fn part2() -> io::Result<()> {
+    let prog = read_input()?;
+
+    let mut data = vec![5, 6, 7, 8, 9];
+    let max_output = data
+        .permutation()
+        .map(|x| get_5_stage_feedback(&prog, &x).unwrap())
+        .max();
+
+    println!("{:?}", max_output);
+
+    Ok(())
+}
+
 #[test]
 fn test_5_stage() {
     let prog = &[

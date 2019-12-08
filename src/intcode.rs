@@ -32,7 +32,7 @@ impl Instruction {
         }
     }
 
-    fn needs_input(&self) -> bool {
+    pub fn needs_input(&self) -> bool {
         match self {
             Instruction::Input(_) => true,
             _ => false,
@@ -134,8 +134,7 @@ pub fn execute_instruction(
     state: &mut ProgramState,
     inst: Instruction,
     input: &mut Option<isize>,
-) -> Result<Option<isize>, &'static str>
-{
+) -> Result<Option<isize>, &'static str> {
     assert!(!state.terminated);
     match inst {
         Instruction::Terminate => {
