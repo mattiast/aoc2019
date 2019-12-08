@@ -6,14 +6,14 @@ pub enum Parameter {
 
 #[derive(Debug)]
 pub enum Instruction {
-    Add(Parameter, Parameter, isize),
-    Mul(Parameter, Parameter, isize),
-    Input(isize),
+    Add(Parameter, Parameter, usize),
+    Mul(Parameter, Parameter, usize),
+    Input(usize),
     Output(Parameter),
     JumpIfTrue(Parameter, Parameter),
     JumpIfFalse(Parameter, Parameter),
-    LessThan(Parameter, Parameter, isize),
-    Equals(Parameter, Parameter, isize),
+    LessThan(Parameter, Parameter, usize),
+    Equals(Parameter, Parameter, usize),
     Terminate,
 }
 
@@ -56,17 +56,17 @@ pub fn parse_instruction(program: &[isize], ip: usize) -> Result<Instruction, &'
         let p1 = parse_parameter(program, ip + 1, (val0 / 100) % 10)?;
         let p2 = parse_parameter(program, ip + 2, (val0 / 1000) % 10)?;
         let x3 = *program.get(ip + 3).ok_or("out of bounds")?;
-        return Ok(Instruction::Add(p1, p2, x3));
+        return Ok(Instruction::Add(p1, p2, x3 as usize));
     }
     if opcode == 2 {
         let p1 = parse_parameter(program, ip + 1, (val0 / 100) % 10)?;
         let p2 = parse_parameter(program, ip + 2, (val0 / 1000) % 10)?;
         let x3 = *program.get(ip + 3).ok_or("out of bounds")?;
-        return Ok(Instruction::Mul(p1, p2, x3));
+        return Ok(Instruction::Mul(p1, p2, x3 as usize));
     }
     if opcode == 3 {
         let x1 = *program.get(ip + 1).ok_or("out of bounds")?;
-        return Ok(Instruction::Input(x1));
+        return Ok(Instruction::Input(x1 as usize));
     }
     if opcode == 4 {
         let p1 = parse_parameter(program, ip + 1, (val0 / 100) % 10)?;
@@ -86,13 +86,13 @@ pub fn parse_instruction(program: &[isize], ip: usize) -> Result<Instruction, &'
         let p1 = parse_parameter(program, ip + 1, (val0 / 100) % 10)?;
         let p2 = parse_parameter(program, ip + 2, (val0 / 1000) % 10)?;
         let x3 = *program.get(ip + 3).ok_or("out of bounds")?;
-        return Ok(Instruction::LessThan(p1, p2, x3));
+        return Ok(Instruction::LessThan(p1, p2, x3 as usize));
     }
     if opcode == 8 {
         let p1 = parse_parameter(program, ip + 1, (val0 / 100) % 10)?;
         let p2 = parse_parameter(program, ip + 2, (val0 / 1000) % 10)?;
         let x3 = *program.get(ip + 3).ok_or("out of bounds")?;
-        return Ok(Instruction::Equals(p1, p2, x3));
+        return Ok(Instruction::Equals(p1, p2, x3 as usize));
     }
     Err("invalid opcode")
 }
@@ -145,20 +145,20 @@ where
         Instruction::Add(i1, i2, i3) => {
             let x1 = read_parameter(i1, &state.mem)?;
             let x2 = read_parameter(i2, &state.mem)?;
-            state.mem[i3 as usize] = x1 + x2;
+            state.mem[i3] = x1 + x2;
             state.ip += inst.size();
             Ok(ER::next())
         }
         Instruction::Mul(i1, i2, i3) => {
             let x1 = read_parameter(i1, &state.mem)?;
             let x2 = read_parameter(i2, &state.mem)?;
-            state.mem[i3 as usize] = x1 * x2;
+            state.mem[i3] = x1 * x2;
             state.ip += inst.size();
             Ok(ER::next())
         }
         Instruction::Input(i1) => {
             let input = inputs.next().ok_or("ran out of inputs")?;
-            state.mem[i1 as usize] = input;
+            state.mem[i1] = input;
             state.ip += inst.size();
             Ok(ER::next())
         }
@@ -195,7 +195,7 @@ where
             let x1 = read_parameter(i1, &state.mem)?;
             let x2 = read_parameter(i2, &state.mem)?;
             let result = if x1 < x2 { 1 } else { 0 };
-            state.mem[i3 as usize] = result;
+            state.mem[i3] = result;
             state.ip += inst.size();
             Ok(ER::next())
         }
@@ -203,7 +203,7 @@ where
             let x1 = read_parameter(i1, &state.mem)?;
             let x2 = read_parameter(i2, &state.mem)?;
             let result = if x1 == x2 { 1 } else { 0 };
-            state.mem[i3 as usize] = result;
+            state.mem[i3] = result;
             state.ip += inst.size();
             Ok(ER::next())
         }
