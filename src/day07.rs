@@ -19,9 +19,13 @@ fn execute_until_termination(
     let mut state = ProgramState::init(program.clone());
     let mut outs: Vec<isize> = vec![];
     let mut iter = inputs.into_iter();
+    let mut input = iter.next();
     loop {
         let inst = parse_instruction(&state.mem, state.ip)?;
-        let new_ip = execute_instruction(&mut state, inst, &mut iter)?;
+        if input.is_none() {
+            input = iter.next();
+        }
+        let new_ip = execute_instruction(&mut state, inst, &mut input)?;
         match new_ip {
             ER::Terminate => break,
             ER::Continue { output } => {

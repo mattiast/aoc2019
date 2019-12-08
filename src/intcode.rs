@@ -31,6 +31,13 @@ impl Instruction {
             Instruction::Terminate => 1,
         }
     }
+
+    fn needs_input(&self) -> bool {
+        match self {
+            Instruction::Input(_) => true,
+            _ => false,
+        }
+    }
 }
 
 fn parse_parameter(
@@ -132,13 +139,11 @@ impl ProgramState {
     }
 }
 
-pub fn execute_instruction<I>(
+pub fn execute_instruction(
     state: &mut ProgramState,
     inst: Instruction,
-    inputs: &mut I,
+    input: &mut Option<isize>,
 ) -> Result<ER, &'static str>
-where
-    I: Iterator<Item = isize>,
 {
     match inst {
         Instruction::Terminate => Ok(ER::Terminate),
@@ -157,8 +162,9 @@ where
             Ok(ER::next())
         }
         Instruction::Input(i1) => {
-            let input = inputs.next().ok_or("ran out of inputs")?;
-            state.mem[i1] = input;
+            let inpt = input.ok_or("ran out of inputs")?;
+            *input = None;
+            state.mem[i1] = inpt;
             state.ip += inst.size();
             Ok(ER::next())
         }
@@ -214,7 +220,7 @@ where
 fn test_execute_instruction() {
     let mut state = ProgramState::init(vec![2, 4, 4, 5, 99, 0]);
     let inst = parse_instruction(&state.mem, 0).unwrap();
-    let mut iter = (vec![]).into_iter();
+    let mut iter = None;
     execute_instruction(&mut state, inst, &mut iter).unwrap();
     assert_eq!(state.mem[5], 9801);
 }
