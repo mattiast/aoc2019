@@ -2,18 +2,20 @@
 pub enum Parameter {
     Positional(usize),
     Immediate(isize),
+    Relative(isize),
 }
 
 #[derive(Debug)]
 pub enum Instruction {
-    Add(Parameter, Parameter, usize),
-    Mul(Parameter, Parameter, usize),
-    Input(usize),
+    Add(Parameter, Parameter, Parameter),
+    Mul(Parameter, Parameter, Parameter),
+    Input(Parameter),
     Output(Parameter),
     JumpIfTrue(Parameter, Parameter),
     JumpIfFalse(Parameter, Parameter),
-    LessThan(Parameter, Parameter, usize),
-    Equals(Parameter, Parameter, usize),
+    LessThan(Parameter, Parameter, Parameter),
+    Equals(Parameter, Parameter, Parameter),
+    AdjustRelativeBase(Parameter),
     Terminate,
 }
 
@@ -28,6 +30,7 @@ impl Instruction {
             Instruction::JumpIfFalse(_, _) => 3,
             Instruction::LessThan(_, _, _) => 4,
             Instruction::Equals(_, _, _) => 4,
+            Instruction::AdjustRelativeBase(_) => 2,
             Instruction::Terminate => 1,
         }
     }
@@ -49,6 +52,7 @@ fn parse_parameter(
     match mode_code {
         0 => Ok(Parameter::Positional(x as usize)),
         1 => Ok(Parameter::Immediate(x)),
+        2 => Ok(Parameter::Relative(x)),
         _ => Err("unknown parameter mode"),
     }
 }
@@ -62,18 +66,18 @@ pub fn parse_instruction(program: &[isize], ip: usize) -> Result<Instruction, &'
     if opcode == 1 {
         let p1 = parse_parameter(program, ip + 1, (val0 / 100) % 10)?;
         let p2 = parse_parameter(program, ip + 2, (val0 / 1000) % 10)?;
-        let x3 = *program.get(ip + 3).ok_or("out of bounds")?;
-        return Ok(Instruction::Add(p1, p2, x3 as usize));
+        let p3 = parse_parameter(program, ip + 3, (val0 / 10000) % 10)?;
+        return Ok(Instruction::Add(p1, p2, p3));
     }
     if opcode == 2 {
         let p1 = parse_parameter(program, ip + 1, (val0 / 100) % 10)?;
         let p2 = parse_parameter(program, ip + 2, (val0 / 1000) % 10)?;
-        let x3 = *program.get(ip + 3).ok_or("out of bounds")?;
-        return Ok(Instruction::Mul(p1, p2, x3 as usize));
+        let p3 = parse_parameter(program, ip + 3, (val0 / 10000) % 10)?;
+        return Ok(Instruction::Mul(p1, p2, p3));
     }
     if opcode == 3 {
-        let x1 = *program.get(ip + 1).ok_or("out of bounds")?;
-        return Ok(Instruction::Input(x1 as usize));
+        let p1 = parse_parameter(program, ip + 1, (val0 / 100) % 10)?;
+        return Ok(Instruction::Input(p1));
     }
     if opcode == 4 {
         let p1 = parse_parameter(program, ip + 1, (val0 / 100) % 10)?;
@@ -92,39 +96,65 @@ pub fn parse_instruction(program: &[isize], ip: usize) -> Result<Instruction, &'
     if opcode == 7 {
         let p1 = parse_parameter(program, ip + 1, (val0 / 100) % 10)?;
         let p2 = parse_parameter(program, ip + 2, (val0 / 1000) % 10)?;
-        let x3 = *program.get(ip + 3).ok_or("out of bounds")?;
-        return Ok(Instruction::LessThan(p1, p2, x3 as usize));
+        let p3 = parse_parameter(program, ip + 3, (val0 / 10000) % 10)?;
+        return Ok(Instruction::LessThan(p1, p2, p3));
     }
     if opcode == 8 {
         let p1 = parse_parameter(program, ip + 1, (val0 / 100) % 10)?;
         let p2 = parse_parameter(program, ip + 2, (val0 / 1000) % 10)?;
-        let x3 = *program.get(ip + 3).ok_or("out of bounds")?;
-        return Ok(Instruction::Equals(p1, p2, x3 as usize));
+        let p3 = parse_parameter(program, ip + 3, (val0 / 10000) % 10)?;
+        return Ok(Instruction::Equals(p1, p2, p3));
+    }
+    if opcode == 9 {
+        let p1 = parse_parameter(program, ip + 1, (val0 / 100) % 10)?;
+        return Ok(Instruction::AdjustRelativeBase(p1));
     }
     Err("invalid opcode")
 }
 
-fn read_parameter(p: Parameter, program: &[isize]) -> Result<isize, &'static str> {
+fn read_parameter(p: Parameter, state: &ProgramState) -> Result<isize, &'static str> {
     match p {
         Parameter::Immediate(x) => Ok(x),
         Parameter::Positional(a) => {
-            let x = program.get(a).ok_or("out of bounds")?;
+            let x = state.mem.get(a).ok_or("out of bounds")?;
+            Ok(*x)
+        }
+        Parameter::Relative(a) => {
+            let addr = (state.relative_base as isize + a) as usize;
+            let x = state.mem.get(addr).ok_or("out of bounds")?;
             Ok(*x)
         }
     }
 }
 
+fn write_to_memory(
+    p: Parameter,
+    value: isize,
+    state: &mut ProgramState,
+) -> Result<(), &'static str> {
+    let addr = match p {
+        Parameter::Immediate(_) => return Err("trying to write to immediate value"),
+        Parameter::Positional(a) => a,
+        Parameter::Relative(a) => ((state.relative_base as isize + a) as usize),
+    };
+    state.mem[addr] = value;
+    Ok(())
+}
+
 pub struct ProgramState {
     pub mem: Vec<isize>,
     pub ip: usize,
+    pub relative_base: usize,
     pub terminated: bool,
 }
 
 impl ProgramState {
-    pub fn init(code: Vec<isize>) -> ProgramState {
+    pub fn init(mut code: Vec<isize>) -> ProgramState {
+        code.extend(vec![0; 10000]);
         ProgramState {
             mem: code,
             ip: 0,
+            relative_base: 0,
             terminated: false,
         }
     }
@@ -142,35 +172,35 @@ pub fn execute_instruction(
             Ok(None)
         }
         Instruction::Add(i1, i2, i3) => {
-            let x1 = read_parameter(i1, &state.mem)?;
-            let x2 = read_parameter(i2, &state.mem)?;
-            state.mem[i3] = x1 + x2;
+            let x1 = read_parameter(i1, &state)?;
+            let x2 = read_parameter(i2, &state)?;
+            write_to_memory(i3, x1 + x2, state)?;
             state.ip += inst.size();
             Ok(None)
         }
         Instruction::Mul(i1, i2, i3) => {
-            let x1 = read_parameter(i1, &state.mem)?;
-            let x2 = read_parameter(i2, &state.mem)?;
-            state.mem[i3] = x1 * x2;
+            let x1 = read_parameter(i1, &state)?;
+            let x2 = read_parameter(i2, &state)?;
+            write_to_memory(i3, x1 * x2, state)?;
             state.ip += inst.size();
             Ok(None)
         }
         Instruction::Input(i1) => {
             let inpt = input.ok_or("ran out of inputs")?;
             *input = None;
-            state.mem[i1] = inpt;
+            write_to_memory(i1, inpt, state)?;
             state.ip += inst.size();
             Ok(None)
         }
         Instruction::Output(i1) => {
-            let x1 = read_parameter(i1, &state.mem)?;
+            let x1 = read_parameter(i1, &state)?;
             state.ip += inst.size();
             Ok(Some(x1))
         }
         Instruction::JumpIfTrue(i1, i2) => {
-            let x1 = read_parameter(i1, &state.mem)?;
+            let x1 = read_parameter(i1, &state)?;
             if x1 != 0 {
-                let x2 = read_parameter(i2, &state.mem)?;
+                let x2 = read_parameter(i2, &state)?;
                 state.ip = x2 as usize;
                 Ok(None)
             } else {
@@ -179,9 +209,9 @@ pub fn execute_instruction(
             }
         }
         Instruction::JumpIfFalse(i1, i2) => {
-            let x1 = read_parameter(i1, &state.mem)?;
+            let x1 = read_parameter(i1, &state)?;
             if x1 == 0 {
-                let x2 = read_parameter(i2, &state.mem)?;
+                let x2 = read_parameter(i2, &state)?;
                 state.ip = x2 as usize;
                 Ok(None)
             } else {
@@ -190,18 +220,25 @@ pub fn execute_instruction(
             }
         }
         Instruction::LessThan(i1, i2, i3) => {
-            let x1 = read_parameter(i1, &state.mem)?;
-            let x2 = read_parameter(i2, &state.mem)?;
+            let x1 = read_parameter(i1, &state)?;
+            let x2 = read_parameter(i2, &state)?;
             let result = if x1 < x2 { 1 } else { 0 };
-            state.mem[i3] = result;
+            write_to_memory(i3, result, state)?;
             state.ip += inst.size();
             Ok(None)
         }
         Instruction::Equals(i1, i2, i3) => {
-            let x1 = read_parameter(i1, &state.mem)?;
-            let x2 = read_parameter(i2, &state.mem)?;
+            let x1 = read_parameter(i1, &state)?;
+            let x2 = read_parameter(i2, &state)?;
             let result = if x1 == x2 { 1 } else { 0 };
-            state.mem[i3] = result;
+            write_to_memory(i3, result, state)?;
+            state.ip += inst.size();
+            Ok(None)
+        }
+        Instruction::AdjustRelativeBase(i1) => {
+            let x1 = read_parameter(i1, &state)?;
+            let new_value = (state.relative_base as isize + x1) as usize;
+            state.relative_base = new_value;
             state.ip += inst.size();
             Ok(None)
         }
