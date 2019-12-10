@@ -7,9 +7,9 @@ pub fn read_input() -> io::Result<Vec<Point>> {
     let reader = BufReader::new(file);
 
     let mut asteroids: Vec<(i32, i32)> = vec![];
-    for (i, line) in reader.lines().enumerate() {
+    for (j, line) in reader.lines().enumerate() {
         let line = line?;
-        for (j, c) in line.chars().enumerate() {
+        for (i, c) in line.chars().enumerate() {
             if c == '#' {
                 asteroids.push((i as i32, j as i32));
             }
@@ -35,23 +35,49 @@ fn visible(p1: Point, p2: Point, aset: &HashSet<Point>) -> bool {
     true
 }
 
+use std::f64;
+fn angle(p: Point, q: Point) -> f64 {
+    let (x, y) = (p.0 - q.0, p.1 - q.1);
+    let a = Complex::new(y as f64, -x as f64).arg();
+    if a < 0.0 {
+        a + 2.0 * f64::consts::PI
+    } else {
+        a
+    }
+}
+
+use num::complex::Complex;
 use std::collections::HashSet;
 pub fn part1() -> io::Result<()> {
     let stuff = read_input()?;
     let aset: HashSet<Point> = stuff.iter().cloned().collect();
 
     let mut maxc = 0;
+    let mut station: Point = (0, 0);
     for p in stuff.iter().cloned() {
         let c = stuff
             .iter()
             .cloned()
             .filter(|q| visible(p, *q, &aset))
             .count();
-        println!("{:?}: {}", p, c);
 
-        maxc = maxc.max(c);
+        if c > maxc {
+            maxc = c;
+            station = p;
+        }
     }
-    println!("max count: {}", maxc);
+    println!("max count: {} at {:?}", maxc, station);
+
+    let mut angles: Vec<_> = stuff
+        .iter()
+        .cloned()
+        .filter(|q| visible(station, *q, &aset) && *q != station)
+        .map(|q| (angle(station, q), q))
+        .collect();
+
+    angles.sort_by(|a, b| a.partial_cmp(b).unwrap());
+
+    println!("200th angle {:?}", angles[199]);
 
     Ok(())
 }
