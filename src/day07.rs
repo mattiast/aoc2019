@@ -1,4 +1,4 @@
-use crate::intcode::{execute_instruction, parse_instruction, ProgramState};
+use crate::intcode::ProgramState;
 use std::fs::File;
 use std::io::{self, prelude::BufRead, BufReader};
 
@@ -21,11 +21,11 @@ fn execute_until_termination(
     let mut iter = inputs.into_iter();
     let mut input = iter.next();
     while !state.terminated {
-        let inst = parse_instruction(&state.mem, state.ip)?;
+        let inst = state.parse_instruction()?;
         if input.is_none() {
             input = iter.next();
         }
-        let output = execute_instruction(&mut state, inst, &mut input)?;
+        let output = state.execute_instruction(inst, &mut input)?;
         if let Some(out) = output {
             outs.push(out);
         }
@@ -81,12 +81,12 @@ fn get_5_stage_feedback(program: &[isize], phases: &[isize]) -> Result<isize, &'
             if states[i].terminated {
                 continue;
             }
-            let inst = parse_instruction(&states[i].mem, states[i].ip).unwrap();
+            let inst = states[i].parse_instruction().unwrap();
             if inst.needs_input() && inputs[i].is_empty() {
                 continue;
             }
             let mut inp = inputs[i].first().cloned();
-            let mout = execute_instruction(&mut states[i], inst, &mut inp).unwrap();
+            let mout = states[i].execute_instruction(inst, &mut inp).unwrap();
             if !inputs[i].is_empty() && inp.is_none() {
                 inputs[i].remove(0);
             }

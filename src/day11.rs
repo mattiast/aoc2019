@@ -1,4 +1,4 @@
-use crate::intcode::{self, ProgramState};
+use crate::intcode::ProgramState;
 
 use std::fs::File;
 use std::io::{self, prelude::BufRead, BufReader};
@@ -17,8 +17,8 @@ fn run_round(input: bool, ps: &mut ProgramState) -> Result<(bool, bool), &'stati
     let mut inp = Some(if input { 1 } else { 0 });
     let mut output: Vec<isize> = vec![];
     loop {
-        let inst = intcode::parse_instruction(&ps.mem, ps.ip)?;
-        let out = intcode::execute_instruction(ps, inst, &mut inp)?;
+        let inst = ps.parse_instruction()?;
+        let out = ps.execute_instruction(inst, &mut inp)?;
         if let Some(x) = out {
             output.push(x);
         }
@@ -27,11 +27,11 @@ fn run_round(input: bool, ps: &mut ProgramState) -> Result<(bool, bool), &'stati
         }
     }
     loop {
-        let inst = intcode::parse_instruction(&ps.mem, ps.ip)?;
+        let inst = ps.parse_instruction()?;
         if inst.needs_input() || ps.terminated {
             break;
         }
-        let out = intcode::execute_instruction(ps, inst, &mut inp)?;
+        let out = ps.execute_instruction(inst, &mut inp)?;
         assert!(out.is_none());
     }
     assert!(inp.is_none());

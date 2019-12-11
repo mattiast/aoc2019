@@ -10,7 +10,7 @@ pub fn read_input() -> io::Result<Vec<isize>> {
     Ok(numbers)
 }
 
-use crate::intcode::{execute_instruction, parse_instruction, ProgramState};
+use crate::intcode::ProgramState;
 fn execute_until_termination(
     program: &mut Vec<isize>,
     inputs: Vec<isize>,
@@ -20,11 +20,11 @@ fn execute_until_termination(
     let mut iter = inputs.into_iter();
     let mut input = iter.next();
     while !state.terminated {
-        let inst = parse_instruction(&state.mem, state.ip)?;
+        let inst = state.parse_instruction()?;
         if input.is_none() {
             input = iter.next();
         }
-        let output = execute_instruction(&mut state, inst, &mut input)?;
+        let output = state.execute_instruction(inst, &mut input)?;
         if let Some(out) = output {
             println!("Output {}", out);
             outs.push(out);
