@@ -137,7 +137,9 @@ impl ProgramState {
         inst: Instruction,
         input: &mut Option<isize>,
     ) -> Result<Option<isize>, &'static str> {
-        assert!(!self.terminated);
+        if self.terminated {
+            return Err("program terminated")
+        }
         match inst {
             Instruction::Terminate => {
                 self.terminated = true;

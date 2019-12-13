@@ -1,11 +1,11 @@
 use std::io;
 fn main() -> io::Result<()> {
-    advent::day12::part2();
+    advent::day13::part2()?;
 
     Ok(())
 }
 
-fn imain() -> io::Result<()> {
+fn _imain() -> io::Result<()> {
     let r = advent::day05::part1()?;
     println!("output = {:?}", r);
     let r = advent::day05::part2()?;
