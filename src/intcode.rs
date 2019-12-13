@@ -138,7 +138,7 @@ impl ProgramState {
         input: &mut Option<isize>,
     ) -> Result<Option<isize>, &'static str> {
         if self.terminated {
-            return Err("program terminated")
+            return Err("program terminated");
         }
         match inst {
             Instruction::Terminate => {

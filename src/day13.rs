@@ -1,5 +1,7 @@
 use crate::intcode::ProgramState;
 
+use ncurses::{addstr, clear, endwin, initscr, mv, refresh};
+use std::cmp::Ordering;
 use std::fs::File;
 use std::io::{self, prelude::BufRead, BufReader};
 
@@ -30,8 +32,8 @@ fn run_round(ps: &mut ProgramState) -> Result<(isize, isize, isize), &'static st
     Ok((output[0], output[1], output[2]))
 }
 
-fn draw_grid(grid: &Vec<Vec<isize>>) {
-    for j in (0..26).rev() {
+fn draw_grid(grid: &Vec<Vec<isize>>, score: isize) {
+    for j in 0..26 {
         let line: String = (0..43)
             .map(|i| match grid[i][j] {
                 0 => ' ',
@@ -42,11 +44,44 @@ fn draw_grid(grid: &Vec<Vec<isize>>) {
                 _ => panic!("wrong tile"),
             })
             .collect();
-        println!("{}", line);
+        mv(j as i32, 0);
+        addstr(&line);
+    }
+    mv(26, 0);
+    addstr(&format!("Score {}", score));
+}
+
+fn artificial_intelligence(grid: &Vec<Vec<isize>>) -> isize {
+    let mut paddle_x: Option<usize> = None;
+    let mut ball_x: Option<usize> = None;
+    for (i, row) in grid.iter().enumerate() {
+        for tile in row.iter() {
+            if *tile == 3 {
+                if paddle_x.is_some() {
+                    panic!("Two paddles");
+                }
+                paddle_x = Some(i);
+            }
+            if *tile == 4 {
+                if ball_x.is_some() {
+                    panic!("Two balls");
+                }
+                ball_x = Some(i);
+            }
+        }
+    }
+    let a = paddle_x.unwrap();
+    let b = ball_x.unwrap();
+    match a.cmp(&b) {
+        Ordering::Less => 1,
+        Ordering::Equal => 0,
+        Ordering::Greater => -1,
     }
 }
 
 pub fn part2() -> io::Result<()> {
+    initscr();
+
     let input = {
         let mut x = read_input()?;
         x[0] = 2;
@@ -62,28 +97,26 @@ pub fn part2() -> io::Result<()> {
         loop {
             let inst = ps.parse_instruction().unwrap();
             let mut i: Option<isize> = if inst.needs_input() {
-                draw_grid(&grid);
-                println!("Score {}", score);
-                let mut inp = String::new();
-                io::stdin().read_line(&mut inp).expect("string");
-                let y: &str = &inp;
-                let x = match y {
-                    "j\n" => -1,
-                    "k\n" => 0,
-                    "l\n" => 1,
-                    _ => panic!("bad user input"),
-                };
-                Some(x)
+                clear();
+                draw_grid(&grid, score);
+                refresh();
+                Some(artificial_intelligence(&grid))
             } else {
                 None
             };
             let out = ps.execute_instruction(inst, &mut i).unwrap();
+            if ps.terminated {
+                break;
+            }
             if let Some(x) = out {
                 output.push(x);
             }
             if output.len() >= 3 {
                 break;
             }
+        }
+        if output.len() < 3 {
+            break;
         }
 
         let out = (output[0], output[1], output[2]);
@@ -94,8 +127,8 @@ pub fn part2() -> io::Result<()> {
         }
     }
 
-    draw_grid(&grid);
-
+    endwin();
+    println!("GAME OVER! score {}", score);
     Ok(())
 }
 
