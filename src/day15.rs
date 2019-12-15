@@ -19,7 +19,7 @@ fn one_step(ps: &mut ProgramState, direction: isize) -> isize {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 enum Tile {
     Unknown,
     Wall,
@@ -27,9 +27,56 @@ enum Tile {
     Oxygen,
 }
 
+#[derive(Clone, Copy)]
+enum Direction {
+    North = 1,
+    South = 2,
+    West = 3,
+    East = 4,
+}
+
+impl Direction {
+    fn left(self) -> Direction {
+        match self {
+            Direction::North => Direction::West,
+            Direction::West => Direction::South,
+            Direction::South => Direction::East,
+            Direction::East => Direction::North,
+        }
+    }
+
+    fn code(self) -> isize {
+        self as isize
+    }
+
+    fn step(self, (x, y): (usize, usize)) -> (usize, usize) {
+        match self {
+            Direction::North => (x, y + 1),
+            Direction::South => (x, y - 1),
+            Direction::East => (x + 1, y),
+            Direction::West => (x - 1, y),
+        }
+    }
+
+    fn random<T>(rng: &mut T) -> Direction
+    where
+        T: Rng,
+    {
+        let i: isize = rng.gen_range(1, 5);
+        match i {
+            1 => Direction::North,
+            2 => Direction::South,
+            3 => Direction::West,
+            4 => Direction::East,
+            _ => panic!(),
+        }
+    }
+}
+
 fn draw_grid(grid: &Vec<Vec<Tile>>) {
     for row in grid {
-        let line: String = row.iter()
+        let line: String = row
+            .iter()
             .map(|t| match t {
                 Tile::Unknown => '?',
                 Tile::Wall => '#',
@@ -41,38 +88,49 @@ fn draw_grid(grid: &Vec<Vec<Tile>>) {
     }
 }
 
-fn direction_vec(direction: isize) -> (isize, isize) {
-    match direction {
-        1 => (0, 1),
-        2 => (0, -1),
-        3 => (-1, 0),
-        4 => (1, 0),
-        _ => panic!("wrong directions"),
+fn artificial_intelligence<T>(
+    (x, y): (usize, usize),
+    grid: &Vec<Vec<Tile>>,
+    rng: &mut T,
+) -> Direction
+where
+    T: Rng,
+{
+    if grid[x][y + 1] == Tile::Unknown {
+        return Direction::North;
     }
+    if grid[x][y - 1] == Tile::Unknown {
+        return Direction::South;
+    }
+    if grid[x - 1][y] == Tile::Unknown {
+        return Direction::West;
+    }
+    if grid[x + 1][y] == Tile::Unknown {
+        return Direction::East;
+    }
+    Direction::random(rng)
 }
 
 pub fn part1() {
     let mut ps = ProgramState::init_from_file("data/input15.txt").unwrap();
     let mut rng = thread_rng();
-    let mut pos: (isize, isize) = (25, 25);
-    let mut grid: Vec<Vec<Tile>> = vec![ vec![ Tile::Unknown; 50]; 50];
+    let mut pos: (usize, usize) = (25, 25);
+    let mut grid: Vec<Vec<Tile>> = vec![vec![Tile::Unknown; 50]; 50];
 
-    for i in 0..1_000_000 {
-        let direction: isize = rng.gen_range(1, 5);
-        let (dx, dy) = direction_vec(direction);
-        let output = one_step(&mut ps, direction);
+    for _ in 0..100_000 {
+        let direction = artificial_intelligence(pos, &grid, &mut rng);
+        let next_pos = direction.step(pos);
+        let output = one_step(&mut ps, direction.code());
         if output == 0 {
-            grid[(pos.0 + dx) as usize][(pos.1 + dy) as usize] = Tile::Wall;
+            grid[next_pos.0][next_pos.1] = Tile::Wall;
         }
         if output == 1 {
-            pos.0 += dx;
-            pos.1 += dy;
-            grid[pos.0 as usize][pos.1 as usize] = Tile::Open;
+            pos = next_pos;
+            grid[pos.0][pos.1] = Tile::Open;
         }
         if output == 2 {
-            pos.0 += dx;
-            pos.1 += dy;
-            grid[pos.0 as usize][pos.1 as usize] = Tile::Oxygen;
+            pos = next_pos;
+            grid[pos.0][pos.1] = Tile::Oxygen;
         }
     }
     draw_grid(&grid);
