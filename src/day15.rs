@@ -19,12 +19,23 @@ fn one_step(ps: &mut ProgramState, direction: isize) -> isize {
     }
 }
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 enum Tile {
     Unknown,
     Wall,
     Open,
     Oxygen,
+}
+
+impl Tile {
+    fn from_code(code: isize) -> Tile {
+        match code {
+            0 => Tile::Wall,
+            1 => Tile::Open,
+            2 => Tile::Oxygen,
+            _ => panic!("invalid tile code"),
+        }
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -42,6 +53,15 @@ impl Direction {
             Direction::West => Direction::South,
             Direction::South => Direction::East,
             Direction::East => Direction::North,
+        }
+    }
+
+    fn right(self) -> Direction {
+        match self {
+            Direction::North => Direction::East,
+            Direction::West => Direction::North,
+            Direction::South => Direction::West,
+            Direction::East => Direction::South,
         }
     }
 
@@ -115,22 +135,19 @@ pub fn part1() {
     let mut ps = ProgramState::init_from_file("data/input15.txt").unwrap();
     let mut rng = thread_rng();
     let mut pos: (usize, usize) = (25, 25);
+    let mut dir: Direction = Direction::North;
     let mut grid: Vec<Vec<Tile>> = vec![vec![Tile::Unknown; 50]; 50];
 
+    let mut turned: bool = false;
     for _ in 0..100_000 {
-        let direction = artificial_intelligence(pos, &grid, &mut rng);
+        //let direction = artificial_intelligence(pos, &grid, &mut rng);
+        let direction = dir.left();
         let next_pos = direction.step(pos);
         let output = one_step(&mut ps, direction.code());
-        if output == 0 {
-            grid[next_pos.0][next_pos.1] = Tile::Wall;
-        }
-        if output == 1 {
+        let tile = Tile::from_code(output);
+        grid[next_pos.0][next_pos.1] = tile;
+        if tile != Tile::Wall {
             pos = next_pos;
-            grid[pos.0][pos.1] = Tile::Open;
-        }
-        if output == 2 {
-            pos = next_pos;
-            grid[pos.0][pos.1] = Tile::Oxygen;
         }
     }
     draw_grid(&grid);
