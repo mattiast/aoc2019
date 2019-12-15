@@ -1,3 +1,6 @@
+use std::fs::File;
+use std::io::{self, prelude::BufRead, BufReader};
+
 #[derive(Clone, Copy, Debug)]
 pub enum Parameter {
     Positional(usize),
@@ -73,6 +76,17 @@ impl ProgramState {
             relative_base: 0,
             terminated: false,
         }
+    }
+
+    pub fn init_from_file(path: &str) -> io::Result<ProgramState> {
+        let file = File::open(path)?;
+        let mut reader = BufReader::new(file);
+        let mut buf = "".to_owned();
+        reader.read_line(&mut buf)?;
+        let bb = buf.trim_end();
+        let numbers: Vec<_> = bb.split(',').map(|s| s.parse::<isize>().unwrap()).collect();
+        let ps = ProgramState::init(numbers);
+        Ok(ps)
     }
 
     pub fn parse_instruction(&self) -> Result<Instruction, &'static str> {
