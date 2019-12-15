@@ -207,3 +207,38 @@ pub fn part1() -> io::Result<()> {
 
     Ok(())
 }
+
+fn find_oxygen(grid: &Maze) -> Point {
+    for (x, row) in grid.iter().enumerate() {
+        for (y, tile) in row.iter().enumerate() {
+            if *tile == Tile::Oxygen {
+                return (x, y);
+            }
+        }
+    }
+    panic!("no oxygen found")
+}
+
+pub fn part2() -> io::Result<()> {
+    let grid = read_maze()?;
+
+    let start = find_oxygen(&grid);
+    let mut to_visit: Vec<(Point, usize)> = Vec::with_capacity(100);
+    let mut visited: HashSet<Point> = HashSet::new();
+
+    to_visit.push((start, 0));
+    while !to_visit.is_empty() {
+        let (p, d) = to_visit.remove(0);
+        if visited.contains(&p) {
+            continue;
+        }
+        println!("visiting {:?} distance {}", p, d);
+        let ns = find_neighbors(p, &grid);
+        for n in ns {
+            to_visit.push((n, d + 1));
+        }
+        visited.insert(p);
+    }
+
+    Ok(())
+}
