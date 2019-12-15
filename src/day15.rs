@@ -1,6 +1,9 @@
 use crate::intcode::ProgramState;
 use rand::thread_rng;
 use rand::Rng;
+use std::collections::HashSet;
+use std::fs::File;
+use std::io::{self, prelude::BufRead, BufReader};
 
 fn one_step(ps: &mut ProgramState, direction: isize) -> isize {
     let mut input: Option<isize> = Some(direction);
@@ -36,6 +39,15 @@ impl Tile {
             _ => panic!("invalid tile code"),
         }
     }
+
+    fn can_step(self) -> bool {
+        match self {
+            Tile::Wall => false,
+            Tile::Open => true,
+            Tile::Oxygen => true,
+            Tile::Unknown => panic!("dunno if can step"),
+        }
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -47,24 +59,6 @@ enum Direction {
 }
 
 impl Direction {
-    fn left(self) -> Direction {
-        match self {
-            Direction::North => Direction::West,
-            Direction::West => Direction::South,
-            Direction::South => Direction::East,
-            Direction::East => Direction::North,
-        }
-    }
-
-    fn right(self) -> Direction {
-        match self {
-            Direction::North => Direction::East,
-            Direction::West => Direction::North,
-            Direction::South => Direction::West,
-            Direction::East => Direction::South,
-        }
-    }
-
     fn code(self) -> isize {
         self as isize
     }
@@ -98,9 +92,9 @@ fn draw_grid(grid: &Vec<Vec<Tile>>) {
         let line: String = row
             .iter()
             .map(|t| match t {
-                Tile::Unknown => '?',
+                Tile::Unknown => ' ',
                 Tile::Wall => '#',
-                Tile::Open => ' ',
+                Tile::Open => '.',
                 Tile::Oxygen => 'O',
             })
             .collect();
@@ -131,17 +125,17 @@ where
     Direction::random(rng)
 }
 
-pub fn part1() {
+pub fn print_maze() {
     let mut ps = ProgramState::init_from_file("data/input15.txt").unwrap();
     let mut rng = thread_rng();
     let mut pos: (usize, usize) = (25, 25);
-    let mut dir: Direction = Direction::North;
     let mut grid: Vec<Vec<Tile>> = vec![vec![Tile::Unknown; 50]; 50];
 
-    let mut turned: bool = false;
-    for _ in 0..100_000 {
-        //let direction = artificial_intelligence(pos, &grid, &mut rng);
-        let direction = dir.left();
+    grid[pos.0][pos.1] = Tile::Open; // start from open tile
+
+    for _ in 0..1_000_000 {
+        let direction = artificial_intelligence(pos, &grid, &mut rng);
+        //let direction = dir.left();
         let next_pos = direction.step(pos);
         let output = one_step(&mut ps, direction.code());
         let tile = Tile::from_code(output);
@@ -151,4 +145,65 @@ pub fn part1() {
         }
     }
     draw_grid(&grid);
+}
+
+fn read_maze() -> io::Result<Vec<Vec<Tile>>> {
+    let file = File::open("maze.txt")?;
+    let reader = BufReader::new(file);
+
+    let mut result = vec![];
+    for mline in reader.lines() {
+        let line = mline?;
+        let row: Vec<_> = line
+            .chars()
+            .map(|c| match c {
+                ' ' => Tile::Unknown,
+                '.' => Tile::Open,
+                '#' => Tile::Wall,
+                'O' => Tile::Oxygen,
+                _ => panic!("tile char wrong"),
+            })
+            .collect();
+        result.push(row);
+    }
+
+    Ok(result)
+}
+
+fn find_neighbors((x, y): Point, grid: &Maze) -> Vec<Point> {
+    let cands = vec![(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)];
+    cands
+        .into_iter()
+        .filter(|p| grid[p.0][p.1].can_step())
+        .collect()
+}
+
+type Point = (usize, usize);
+type Maze = Vec<Vec<Tile>>;
+
+pub fn part1() -> io::Result<()> {
+    let grid = read_maze()?;
+
+    let start: Point = (25, 25);
+    let mut to_visit: Vec<(Point, usize)> = Vec::with_capacity(100);
+    let mut visited: HashSet<Point> = HashSet::new();
+
+    to_visit.push((start, 0));
+    while !to_visit.is_empty() {
+        let (p, d) = to_visit.remove(0);
+        if visited.contains(&p) {
+            continue;
+        }
+        if grid[p.0][p.1] == Tile::Oxygen {
+            println!("Found oxygen at {:?} distance {}", p, d);
+            break;
+        }
+        let ns = find_neighbors(p, &grid);
+        for n in ns {
+            to_visit.push((n, d + 1));
+        }
+        visited.insert(p);
+    }
+
+    Ok(())
 }
