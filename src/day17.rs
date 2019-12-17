@@ -46,3 +46,43 @@ fn find_crossings(grid: &Vec<Vec<u8>>) {
     }
     println!("total {}", total);
 }
+
+use std::fs::File;
+use std::io::Read;
+
+pub fn part2() -> io::Result<()> {
+    let mut ps = ProgramState::init_from_file("data/input17.txt")?;
+    ps.mem[0] = 2;
+
+    let mut output: Vec<u8> = vec![];
+    let mut input = {
+        let mut file = File::open("day17code.txt")?;
+
+        let mut data = Vec::new();
+        file.read_to_end(&mut data)?;
+        data
+    };
+
+    while !ps.terminated {
+        let inst = ps.parse_instruction().unwrap();
+        let mut i: Option<isize> = None;
+        if inst.needs_input() {
+            if input.is_empty() {
+                panic!();
+            } else {
+                i = Some(input.remove(0) as isize);
+            }
+        }
+        let m_outc = ps.execute_instruction(inst, &mut i).unwrap();
+
+        if let Some(outc) = m_outc {
+            output.push(outc as u8);
+            if outc == 10 {
+                let s = String::from_utf8(output).unwrap();
+                print!("{}", s);
+                output = vec![];
+            }
+        }
+    }
+    Ok(())
+}

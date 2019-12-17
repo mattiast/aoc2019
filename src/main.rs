@@ -1,6 +1,6 @@
 use std::io;
 fn main() -> io::Result<()> {
-    advent::day17::part1()?;
+    advent::day17::part2()?;
 
     Ok(())
 }
