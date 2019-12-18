@@ -87,6 +87,7 @@ fn find_neighbors((x, y): Point, grid: &Maze) -> Vec<Point> {
 type Point = (usize, usize);
 type Maze = Vec<Vec<Tile>>;
 
+#[derive(Clone)]
 struct State {
     grid: Maze,
     location: Point,
@@ -137,19 +138,27 @@ impl State {
     }
 }
 
+use rand::thread_rng;
+use rand::Rng;
 pub fn part1() -> io::Result<()> {
-    let mut state = read_maze()?;
+    let state = read_maze()?;
 
-    loop {
-        let keys = state.find_reachable_keys();
-        if keys.is_empty() {
-            break;
+    let mut rng = thread_rng();
+    let mut best = 10000usize;
+
+    for _ in 0..100 {
+        let mut state = state.clone();
+        loop {
+            let keys = state.find_reachable_keys();
+            if keys.is_empty() {
+                break;
+            }
+            let key = keys[rng.gen_range(0, keys.len())];
+            state.move_to_key(key);
         }
-        let key = keys[0];
-        state.move_to_key(key);
-        println!("moving to key {} out of {}", key.1, keys.len());
+        best = best.min(state.odometer);
     }
-    println!("Total distance {}", state.odometer);
+    println!("Best distance {}", best);
 
     Ok(())
 }
