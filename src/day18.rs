@@ -162,14 +162,3 @@ pub fn part1() -> io::Result<()> {
 
     Ok(())
 }
-
-fn find_oxygen(grid: &Maze) -> Point {
-    for (x, row) in grid.iter().enumerate() {
-        for (y, tile) in row.iter().enumerate() {
-            if *tile == Tile::Door('a') {
-                return (x, y);
-            }
-        }
-    }
-    panic!("no oxygen found")
-}
