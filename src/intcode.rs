@@ -60,6 +60,7 @@ fn parse_parameter(
     }
 }
 
+#[derive(Clone)]
 pub struct ProgramState {
     pub mem: Vec<isize>,
     pub ip: usize,
