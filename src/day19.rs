@@ -14,6 +14,24 @@ pub fn part1() -> io::Result<()> {
     Ok(())
 }
 
+use clap::{value_t_or_exit, App, Arg};
+pub fn part2() -> io::Result<()> {
+    let matches = App::new("run computer")
+        .arg(Arg::with_name("x"))
+        .arg(Arg::with_name("y"))
+        .get_matches();
+    let x = value_t_or_exit!(matches, "x", isize);
+    let y = value_t_or_exit!(matches, "y", isize);
+    let ps = ProgramState::init_from_file("data/input19.txt")?;
+
+    println!("x lo {}", run_with_input(ps.clone(), x + 99, y));
+    println!("x hi {}", run_with_input(ps.clone(), x + 100, y));
+    println!("y lo {}", run_with_input(ps.clone(), x, y + 99));
+    println!("y hi {}", run_with_input(ps.clone(), x, y + 100));
+
+    Ok(())
+}
+
 fn run_with_input(mut ps: ProgramState, x: isize, y: isize) -> isize {
     let mut input = vec![x, y];
     let mut output = vec![];
