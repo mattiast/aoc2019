@@ -54,9 +54,9 @@ pub fn part2() -> io::Result<()> {
     let mut ps = ProgramState::init_from_file("data/input17.txt")?;
     ps.mem[0] = 2;
 
-    let mut output: Vec<u8> = vec![];
+    let mut output: Vec<isize> = vec![];
     let mut input = {
-        let mut file = File::open("day17code.txt")?;
+        let mut file = File::open("data/day17code.txt")?;
 
         let mut data = Vec::new();
         file.read_to_end(&mut data)?;
@@ -76,13 +76,82 @@ pub fn part2() -> io::Result<()> {
         let m_outc = ps.execute_instruction(inst, &mut i).unwrap();
 
         if let Some(outc) = m_outc {
-            output.push(outc as u8);
+            output.push(outc);
             if outc == 10 {
-                let s = String::from_utf8(output).unwrap();
+                let s = String::from_utf8(output.iter().map(|c| *c as u8).collect()).unwrap();
                 print!("{}", s);
                 output = vec![];
             }
         }
     }
+    println!("final output {:?}", output.last());
+    Ok(())
+}
+
+use std::io::BufRead;
+use std::io::BufReader;
+fn read_maze() -> io::Result<Vec<Vec<bool>>> {
+    let file = File::open("data/day17maze.txt")?;
+    let reader = BufReader::new(file);
+
+    let mut result = vec![];
+    for mline in reader.lines() {
+        let line = mline?;
+        let row: Vec<_> = line.chars().map(|c| c == '#').collect();
+        result.push(row);
+    }
+
+    Ok(result)
+}
+
+fn turn((x, y): (usize, usize), (dx, dy): (isize, isize)) -> (usize, usize) {
+    let nx = (x as isize) + dx;
+    let ny = (y as isize) + dy;
+    (nx as usize, ny as usize)
+}
+
+fn read(maze: &Vec<Vec<bool>>, p: (usize, usize)) -> bool {
+    if p.0 < maze.len() {
+        let row = &maze[p.0];
+        if p.1 < row.len() {
+            row[p.1]
+        } else {
+            false
+        }
+    } else {
+        false
+    }
+}
+
+pub fn find_code() -> io::Result<()> {
+    let maze = read_maze()?;
+    let mut pos = (16usize, 0usize);
+    let mut dir = (-1isize, 0isize);
+
+    let mut d = 0;
+    loop {
+        let s = turn(pos, dir);
+        let l = turn(pos, (-dir.1, dir.0));
+        let r = turn(pos, (dir.1, -dir.0));
+        if read(&maze, s) {
+            pos = s;
+            d += 1;
+        } else if read(&maze, l) {
+            print!("{}", d);
+            d = 0;
+            print!("L");
+            dir = (-dir.1, dir.0);
+        } else if read(&maze, r) {
+            print!("{}", d);
+            d = 0;
+            print!("R");
+            dir = (dir.1, -dir.0);
+        } else {
+            print!("{}", d);
+            break;
+        }
+    }
+    println!();
+
     Ok(())
 }
