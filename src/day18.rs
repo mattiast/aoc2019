@@ -21,21 +21,6 @@ impl Tile {
     }
 }
 
-fn draw_grid(grid: &Vec<Vec<Tile>>) {
-    for row in grid {
-        let line: String = row
-            .iter()
-            .map(|t| match t {
-                Tile::Wall => '#',
-                Tile::Open => ' ',
-                Tile::Key(c) => *c,
-                Tile::Door(c) => c.to_ascii_uppercase(),
-            })
-            .collect();
-        println!("{}", line);
-    }
-}
-
 fn read_maze() -> io::Result<State> {
     let file = File::open("data/input18.txt")?;
     let reader = BufReader::new(file);
