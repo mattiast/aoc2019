@@ -233,6 +233,28 @@ impl ProgramState {
             }
         }
     }
+
+    pub fn run_with_input(&mut self, input: &[isize]) -> Result<(Vec<isize>, usize), &'static str> {
+        let mut output = Vec::new();
+        let mut i = 0usize;
+
+        while !self.terminated {
+            let inst = self.parse_instruction()?;
+            if inst.needs_input() && i >= input.len() {
+                break;
+            }
+            let mut inp = input.get(i).cloned();
+            if inst.needs_input() {
+                i += 1;
+            }
+            let m_out = self.execute_instruction(inst, &mut inp)?;
+            if let Some(out) = m_out {
+                output.push(out);
+            }
+        }
+
+        Ok((output, i))
+    }
 }
 
 fn read_parameter(p: Parameter, state: &ProgramState) -> Result<isize, &'static str> {
