@@ -23,6 +23,7 @@ impl Tile {
 
 fn read_maze() -> io::Result<State> {
     let file = File::open("data/input18.txt")?;
+    // let file = File::open("day18sample.txt")?;
     let reader = BufReader::new(file);
 
     let mut entry: Option<Point> = None;
@@ -79,8 +80,10 @@ struct State {
     odometer: usize,
 }
 
+type Key = (Point, char, usize);
+
 impl State {
-    fn find_reachable_keys(&self) -> Vec<(Point, char, usize)> {
+    fn find_reachable_keys(&self) -> Vec<Key> {
         let mut to_visit: Vec<(Point, usize)> = Vec::with_capacity(100);
         let mut visited: HashSet<Point> = HashSet::new();
 
@@ -108,7 +111,7 @@ impl State {
         keys_found
     }
 
-    fn move_to_key(&mut self, (p, c, d): (Point, char, usize)) {
+    fn move_to_key(&mut self, (p, c, d): Key) {
         self.location = p;
         self.odometer += d;
 
@@ -126,6 +129,11 @@ impl State {
 use rand::thread_rng;
 use rand::Rng;
 pub fn part1() -> io::Result<()> {
+    artificial_intelligence()?;
+    Ok(())
+}
+
+fn random_search() -> io::Result<()> {
     let state = read_maze()?;
 
     let mut rng = thread_rng();
@@ -144,6 +152,36 @@ pub fn part1() -> io::Result<()> {
         best = best.min(state.odometer);
     }
     println!("Best distance {}", best);
+
+    Ok(())
+}
+
+use std::cmp::Reverse;
+#[derive(Ord, Eq, PartialEq, PartialOrd)]
+struct ReachedState(Reverse<usize>, Vec<Key>);
+
+use std::collections::BinaryHeap;
+
+fn artificial_intelligence() -> io::Result<()> {
+    let state = read_maze()?;
+
+    let mut reached_states: BinaryHeap<ReachedState> = BinaryHeap::new();
+
+    reached_states.push(ReachedState(Reverse(0), Vec::new()));
+
+    while let Some(ReachedState(Reverse(d), keys)) = reached_states.pop() {
+        println!("Can do {} keys in {}", keys.len(), d);
+        let mut state = state.clone();
+        for key in keys.iter() {
+            state.move_to_key(*key);
+        }
+        let next = state.find_reachable_keys();
+        for key in next {
+            let mut nkeys = keys.clone();
+            nkeys.push(key);
+            reached_states.push(ReachedState(Reverse(d + key.2), nkeys));
+        }
+    }
 
     Ok(())
 }
