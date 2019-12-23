@@ -5,21 +5,22 @@ fn _main() -> io::Result<()> {
 
 fn main() -> io::Result<()> {
     let x = advent::day02::part1()?;
-    println!("{}", x);
+    println!("Day 2 part 1: {}", x);
 
     let x = advent::day02::part2()?;
-    println!("{:?}", x);
+    println!("Day 2 part 2: {:?}", x);
 
     let r = advent::day05::part1()?;
-    println!("output = {:?}", r);
+    println!("Day 5 part 1: {:?}", r);
     let r = advent::day05::part2()?;
-    println!("output = {:?}", r);
+    println!("Day 5 part 2: {:?}", r);
 
     advent::day07::part1()?;
     advent::day07::part2()?;
 
     advent::day09::part1()?;
     advent::day09::part2()?;
+
     advent::day11::part1()?;
     Ok(())
 }
