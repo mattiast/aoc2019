@@ -1,16 +1,6 @@
 use crate::intcode::ProgramState;
-use std::fs::File;
-use std::io::{self, prelude::BufRead, BufReader};
-
-pub fn read_input() -> io::Result<Vec<isize>> {
-    let file = File::open("data/input07.txt")?;
-    let mut reader = BufReader::new(file);
-    let mut buf = "".to_owned();
-    reader.read_line(&mut buf)?;
-    let bb = buf.trim_end();
-    let numbers: Vec<_> = bb.split(',').map(|s| s.parse::<isize>().unwrap()).collect();
-    Ok(numbers)
-}
+use permutator::Permutation;
+use std::io;
 
 fn get_5_stage(program: &ProgramState, phases: &[isize]) -> Result<isize, &'static str> {
     let mut x = 0;
@@ -24,7 +14,6 @@ fn get_5_stage(program: &ProgramState, phases: &[isize]) -> Result<isize, &'stat
     Ok(x)
 }
 
-use permutator::Permutation;
 pub fn part1() -> io::Result<isize> {
     let ps = ProgramState::init_from_file("data/input07.txt")?;
 
@@ -37,9 +26,8 @@ pub fn part1() -> io::Result<isize> {
     Ok(max_output.unwrap())
 }
 
-fn get_5_stage_feedback(program: &[isize], phases: &[isize]) -> Result<isize, &'static str> {
-    let prog: Vec<isize> = program.to_vec();
-    let mut states: Vec<_> = (0..5).map(|_| ProgramState::init(prog.clone())).collect();
+fn get_5_stage_feedback(program: &ProgramState, phases: &[isize]) -> Result<isize, &'static str> {
+    let mut states: Vec<_> = (0..5).map(|_| program.clone()).collect();
 
     let mut inputs: Vec<Vec<isize>> = vec![
         vec![phases[0], 0],
@@ -54,19 +42,9 @@ fn get_5_stage_feedback(program: &[isize], phases: &[isize]) -> Result<isize, &'
             if states[i].terminated {
                 continue;
             }
-            let inst = states[i].parse_instruction().unwrap();
-            if inst.needs_input() && inputs[i].is_empty() {
-                continue;
-            }
-            let mut inp = inputs[i].first().cloned();
-            let mout = states[i].execute_instruction(inst, &mut inp).unwrap();
-            if !inputs[i].is_empty() && inp.is_none() {
-                inputs[i].remove(0);
-            }
-            if let Some(out) = mout {
-                let next_i = (i + 1) % 5;
-                inputs[next_i].push(out);
-            }
+            let (outs, k) = states[i].run_with_input(&inputs[i]).unwrap();
+            inputs[i].drain(0..k);
+            inputs[(i + 1) % 5].extend(outs);
         }
         if states[4].terminated {
             break;
@@ -77,12 +55,12 @@ fn get_5_stage_feedback(program: &[isize], phases: &[isize]) -> Result<isize, &'
 }
 
 pub fn part2() -> io::Result<isize> {
-    let prog = read_input()?;
+    let ps = ProgramState::init_from_file("data/input07.txt")?;
 
     let mut data = vec![5, 6, 7, 8, 9];
     let max_output = data
         .permutation()
-        .map(|x| get_5_stage_feedback(&prog, &x).unwrap())
+        .map(|x| get_5_stage_feedback(&ps, &x).unwrap())
         .max();
 
     Ok(max_output.unwrap())
