@@ -1,17 +1,6 @@
 use crate::intcode::ProgramState;
-
-use std::fs::File;
-use std::io::{self, prelude::BufRead, BufReader};
-
-pub fn read_input() -> io::Result<Vec<isize>> {
-    let file = File::open("data/input11.txt")?;
-    let mut reader = BufReader::new(file);
-    let mut buf = "".to_owned();
-    reader.read_line(&mut buf)?;
-    let bb = buf.trim_end();
-    let numbers: Vec<_> = bb.split(',').map(|s| s.parse::<isize>().unwrap()).collect();
-    Ok(numbers)
-}
+use std::collections::HashSet;
+use std::io;
 
 fn run_round(input: bool, ps: &mut ProgramState) -> Result<(bool, bool), &'static str> {
     let mut inp = Some(if input { 1 } else { 0 });
@@ -42,11 +31,8 @@ fn run_round(input: bool, ps: &mut ProgramState) -> Result<(bool, bool), &'stati
     Ok((output[0] == 1, output[1] == 1))
 }
 
-use std::collections::HashSet;
 pub fn part1() -> io::Result<()> {
-    let input = read_input()?;
-
-    let mut ps = ProgramState::init(input);
+    let mut ps = ProgramState::init_from_file("data/input11.txt")?;
 
     let mut grid: Vec<Vec<bool>> = vec![vec![true; 100]; 100];
     let mut pos: (usize, usize) = (50, 50);
@@ -66,16 +52,12 @@ pub fn part1() -> io::Result<()> {
         pos.0 = (pos.0 as isize + dir.0) as usize;
         pos.1 = (pos.1 as isize + dir.1) as usize;
     }
-    println!("{:?}", painted_points.len());
-    println!(
-        "{:?} {:?} {:?} {:?}",
-        painted_points.iter().map(|p| p.0).min(),
-        painted_points.iter().map(|p| p.0).max(),
-        painted_points.iter().map(|p| p.1).min(),
-        painted_points.iter().map(|p| p.1).max(),
-    );
-    for j in (44..51).rev() {
-        let line: String = (45..100)
+    let x_min = painted_points.iter().map(|p| p.0).min().unwrap();
+    let x_max = painted_points.iter().map(|p| p.0).max().unwrap();
+    let y_min = painted_points.iter().map(|p| p.1).min().unwrap();
+    let y_max = painted_points.iter().map(|p| p.1).max().unwrap();
+    for j in (y_min..=y_max).rev() {
+        let line: String = (x_min..=x_max)
             .map(|i| if grid[i][j] { '#' } else { ' ' })
             .collect();
         println!("{}", line);
