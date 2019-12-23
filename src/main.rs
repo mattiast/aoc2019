@@ -18,8 +18,10 @@ fn main() -> io::Result<()> {
     advent::day07::part1()?;
     advent::day07::part2()?;
 
-    advent::day09::part1()?;
-    advent::day09::part2()?;
+    let r = advent::day09::part1()?;
+    println!("Day 9 part 1: {:?}", r);
+    let r = advent::day09::part2()?;
+    println!("Day 9 part 2: {:?}", r);
 
     advent::day11::part1()?;
     Ok(())
