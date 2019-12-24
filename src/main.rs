@@ -1,10 +1,10 @@
 use std::io;
-fn _main() -> io::Result<()> {
-    advent::day11::part1()?;
+fn main() -> io::Result<()> {
+    advent::day24::part1()?;
     Ok(())
 }
 
-fn main() -> io::Result<()> {
+fn _main() -> io::Result<()> {
     println!("Day 2 part 1: {:?}", advent::day02::part1()?);
     println!("Day 2 part 2: {:?}", advent::day02::part2()?);
 

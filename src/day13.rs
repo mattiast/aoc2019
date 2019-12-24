@@ -2,18 +2,7 @@ use crate::intcode::ProgramState;
 
 use ncurses::{addstr, clear, endwin, initscr, mv, refresh};
 use std::cmp::Ordering;
-use std::fs::File;
-use std::io::{self, prelude::BufRead, BufReader};
-
-pub fn read_input() -> io::Result<Vec<isize>> {
-    let file = File::open("data/input13.txt")?;
-    let mut reader = BufReader::new(file);
-    let mut buf = "".to_owned();
-    reader.read_line(&mut buf)?;
-    let bb = buf.trim_end();
-    let numbers: Vec<_> = bb.split(',').map(|s| s.parse::<isize>().unwrap()).collect();
-    Ok(numbers)
-}
+use std::io;
 
 fn run_round(ps: &mut ProgramState) -> Result<(isize, isize, isize), &'static str> {
     let mut output: Vec<isize> = vec![];
@@ -82,13 +71,8 @@ fn artificial_intelligence(grid: &Vec<Vec<isize>>) -> isize {
 pub fn part2() -> io::Result<()> {
     initscr();
 
-    let input = {
-        let mut x = read_input()?;
-        x[0] = 2;
-        x
-    };
-
-    let mut ps = ProgramState::init(input);
+    let mut ps = ProgramState::init_from_file("data/input13.txt")?;
+    ps.mem[0] = 2;
     let mut grid: Vec<Vec<isize>> = vec![vec![0; 50]; 50];
     let mut score: isize = 0;
 
@@ -133,9 +117,7 @@ pub fn part2() -> io::Result<()> {
 }
 
 pub fn part1() -> io::Result<()> {
-    let input = read_input()?;
-
-    let mut ps = ProgramState::init(input);
+    let mut ps = ProgramState::init_from_file("data/input13.txt")?;
 
     let mut grid: Vec<Vec<bool>> = vec![vec![false; 100]; 100];
 
