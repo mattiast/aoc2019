@@ -1,59 +1,9 @@
 use crate::intcode::ProgramState;
-use ncurses::{addstr, clear, endwin, getch, getstr, initscr, mv, refresh};
+use ncurses::{addstr, clear, endwin, getstr, initscr};
 use std::io;
 
 fn get_string(output: Vec<isize>) -> String {
     String::from_utf8(output.iter().map(|c| *c as u8).collect()).unwrap()
-}
-
-#[derive(Clone, Copy)]
-enum Tile {
-    Unknown,
-    Room,
-}
-
-struct GameState {
-    pos: (usize, usize),
-    grid: [[Tile; 20]; 20],
-}
-
-impl GameState {
-    fn init() -> GameState {
-        let mut grid = [[Tile::Unknown; 20]; 20];
-        let pos = (10, 10);
-        grid[pos.0][pos.1] = Tile::Room;
-        GameState { pos, grid }
-    }
-
-    fn render(&self) -> String {
-        let mut s = String::with_capacity(420);
-
-        for (y, line) in self.grid.iter().enumerate().rev() {
-            for (x, tile) in line.iter().enumerate() {
-                let c = if (x, y) == self.pos {
-                    'M'
-                } else {
-                    match tile {
-                        Tile::Unknown => ' ',
-                        Tile::Room => '.',
-                    }
-                };
-                s.push(c);
-            }
-            s.push('\n');
-        }
-
-        s
-    }
-
-    fn step(&mut self, dx: isize, dy: isize) {
-        let (x, y) = self.pos;
-        let nx = (x as isize) + dx;
-        let ny = (y as isize) + dy;
-        self.pos = (nx as usize, ny as usize);
-
-        self.grid[self.pos.0][self.pos.1] = Tile::Room;
-    }
 }
 
 pub fn part1() -> io::Result<()> {
