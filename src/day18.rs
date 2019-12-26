@@ -158,7 +158,7 @@ fn random_search() -> io::Result<()> {
 
 use std::cmp::Reverse;
 #[derive(Ord, Eq, PartialEq, PartialOrd)]
-struct ReachedState(Reverse<usize>, Vec<Key>);
+struct ReachedState(usize, Reverse<usize>, Vec<Key>);
 
 use std::collections::BinaryHeap;
 
@@ -167,10 +167,14 @@ fn artificial_intelligence() -> io::Result<()> {
 
     let mut reached_states: BinaryHeap<ReachedState> = BinaryHeap::new();
 
-    reached_states.push(ReachedState(Reverse(0), Vec::new()));
+    reached_states.push(ReachedState(0, Reverse(0), Vec::new()));
 
-    while let Some(ReachedState(Reverse(d), keys)) = reached_states.pop() {
-        println!("Can do {} keys in {}", keys.len(), d);
+    let mut best = 5000;
+    while let Some(ReachedState(k, Reverse(d), keys)) = reached_states.pop() {
+        if k == 26 && d < best {
+            best = d;
+            println!("Can do in {}", d);
+        }
         let mut state = state.clone();
         for key in keys.iter() {
             state.move_to_key(*key);
@@ -179,7 +183,7 @@ fn artificial_intelligence() -> io::Result<()> {
         for key in next {
             let mut nkeys = keys.clone();
             nkeys.push(key);
-            reached_states.push(ReachedState(Reverse(d + key.2), nkeys));
+            reached_states.push(ReachedState(k + 1, Reverse(d + key.2), nkeys));
         }
     }
 
