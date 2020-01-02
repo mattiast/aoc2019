@@ -1,16 +1,16 @@
 use crate::intcode::ProgramState;
-use std::io;
+use crate::my_error::MyResult;
 
-pub fn part1() -> io::Result<Vec<isize>> {
+pub fn part1() -> MyResult<Vec<isize>> {
     let mut ps = ProgramState::init_from_file("data/input05.txt")?;
-    let (result, k) = ps.run_with_input(&[1]).unwrap();
+    let (result, k) = ps.run_with_input(&[1])?;
     assert!(k == 1);
     Ok(result)
 }
 
-pub fn part2() -> io::Result<Vec<isize>> {
+pub fn part2() -> MyResult<Vec<isize>> {
     let mut ps = ProgramState::init_from_file("data/input05.txt")?;
-    let (result, k) = ps.run_with_input(&[5]).unwrap();
+    let (result, k) = ps.run_with_input(&[5])?;
     assert!(k == 1);
     Ok(result)
 }

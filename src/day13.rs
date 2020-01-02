@@ -1,4 +1,5 @@
 use crate::intcode::{self, ProgramState};
+use crate::my_error::MyResult;
 
 use ncurses::{addstr, clear, endwin, initscr, mv, refresh};
 use std::cmp::Ordering;
@@ -68,7 +69,7 @@ fn artificial_intelligence(grid: &Vec<Vec<isize>>) -> isize {
     }
 }
 
-pub fn part2() -> io::Result<()> {
+pub fn part2() -> MyResult<()> {
     initscr();
 
     let mut ps = ProgramState::init_from_file("data/input13.txt")?;
@@ -79,7 +80,7 @@ pub fn part2() -> io::Result<()> {
     while !ps.terminated {
         let mut output: Vec<isize> = vec![];
         loop {
-            let inst = ps.parse_instruction().unwrap();
+            let inst = ps.parse_instruction()?;
             let mut i: Option<isize> = if inst.needs_input() {
                 clear();
                 draw_grid(&grid, score);
@@ -88,7 +89,7 @@ pub fn part2() -> io::Result<()> {
             } else {
                 None
             };
-            let out = ps.execute_instruction(inst, &mut i).unwrap();
+            let out = ps.execute_instruction(inst, &mut i)?;
             if ps.terminated {
                 break;
             }
@@ -116,7 +117,7 @@ pub fn part2() -> io::Result<()> {
     Ok(())
 }
 
-pub fn part1() -> io::Result<()> {
+pub fn part1() -> MyResult<()> {
     let mut ps = ProgramState::init_from_file("data/input13.txt")?;
 
     let mut grid: Vec<Vec<bool>> = vec![vec![false; 100]; 100];

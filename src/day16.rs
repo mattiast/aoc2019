@@ -1,7 +1,8 @@
+use crate::my_error::MyResult;
 use std::fs::File;
-use std::io::{self, prelude::BufRead, BufReader};
+use std::io::{prelude::BufRead, BufReader};
 
-pub fn read_input() -> io::Result<Vec<i32>> {
+pub fn read_input() -> MyResult<Vec<i32>> {
     let file = File::open("data/input16.txt")?;
     let mut reader = BufReader::new(file);
     let mut buf = "".to_owned();
@@ -42,7 +43,7 @@ fn fft(x: &mut [i32]) {
 }
 
 use clap::{value_t_or_exit, App, Arg};
-pub fn part1() -> io::Result<()> {
+pub fn part1() -> MyResult<()> {
     let matches = App::new("run computer")
         .arg(Arg::with_name("x0"))
         .arg(Arg::with_name("x1"))

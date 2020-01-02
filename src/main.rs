@@ -1,13 +1,11 @@
-use std::io;
+use advent::my_error::MyResult;
 
-use advent::my_error::MyError;
-
-fn main() -> Result<(), MyError> {
-    // advent::day18::part1()?;
+fn main() -> MyResult<()> {
+    advent::day19::part2()?;
     Ok(())
 }
 
-fn _main() -> io::Result<()> {
+fn _main() -> MyResult<()> {
     println!("Day 2 part 1: {:?}", advent::day02::part1()?);
     println!("Day 2 part 2: {:?}", advent::day02::part2()?);
 
@@ -22,6 +20,8 @@ fn _main() -> io::Result<()> {
 
     println!("Day 11 part 1: {:?}", advent::day11::part1()?);
     advent::day11::part2()?;
+
+    println!("Day 19 part 1: {:?}", advent::day19::part1()?);
 
     Ok(())
 }

@@ -1,13 +1,14 @@
 use crate::intcode::ProgramState;
+use crate::my_error::MyResult;
 use std::io;
 
-pub fn part1() -> io::Result<()> {
+pub fn part1() -> MyResult<()> {
     let mut ps = ProgramState::init_from_file("data/input17.txt")?;
 
     let mut x: Vec<u8> = vec![];
     while !ps.terminated {
-        let inst = ps.parse_instruction().unwrap();
-        let output = ps.execute_instruction(inst, &mut None).unwrap();
+        let inst = ps.parse_instruction()?;
+        let output = ps.execute_instruction(inst, &mut None)?;
 
         if let Some(out) = output {
             x.push(out as u8);
@@ -50,7 +51,7 @@ fn find_crossings(grid: &Vec<Vec<u8>>) {
 use std::fs::File;
 use std::io::Read;
 
-pub fn part2() -> io::Result<()> {
+pub fn part2() -> MyResult<()> {
     let mut ps = ProgramState::init_from_file("data/input17.txt")?;
     ps.mem[0] = 2;
 
@@ -64,7 +65,7 @@ pub fn part2() -> io::Result<()> {
     };
 
     while !ps.terminated {
-        let inst = ps.parse_instruction().unwrap();
+        let inst = ps.parse_instruction()?;
         let mut i: Option<isize> = None;
         if inst.needs_input() {
             if input.is_empty() {
@@ -73,7 +74,7 @@ pub fn part2() -> io::Result<()> {
                 i = Some(input.remove(0) as isize);
             }
         }
-        let m_outc = ps.execute_instruction(inst, &mut i).unwrap();
+        let m_outc = ps.execute_instruction(inst, &mut i)?;
 
         if let Some(outc) = m_outc {
             output.push(outc);

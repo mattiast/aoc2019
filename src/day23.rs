@@ -1,7 +1,7 @@
 use crate::intcode::ProgramState;
-use std::io;
+use crate::my_error::MyResult;
 
-pub fn part1() -> io::Result<()> {
+pub fn part1() -> MyResult<()> {
     let ps = ProgramState::init_from_file("data/input23.txt")?;
 
     let mut computers: Vec<_> = (0..50).map(|_| ps.clone()).collect();
@@ -9,7 +9,7 @@ pub fn part1() -> io::Result<()> {
 
     for (i, computer) in computers.iter_mut().enumerate() {
         let inp: &[isize] = &[i as isize];
-        let (out, _) = computer.run_with_input(inp).unwrap();
+        let (out, _) = computer.run_with_input(inp)?;
         assert!(out.len() % 3 == 0);
         for j in 0..out.len() / 3 {
             let (addr, x, y) = (out[3 * j], out[3 * j + 1], out[3 * j + 2]);
@@ -24,7 +24,7 @@ pub fn part1() -> io::Result<()> {
                 let (x, y) = mailboxes[i].remove(0);
                 vec![x, y]
             };
-            let (out, _) = computers[i].run_with_input(&inp).unwrap();
+            let (out, _) = computers[i].run_with_input(&inp)?;
             assert!(out.len() % 3 == 0);
             for j in 0..out.len() / 3 {
                 let (addr, x, y) = (out[3 * j], out[3 * j + 1], out[3 * j + 2]);
@@ -40,7 +40,7 @@ pub fn part1() -> io::Result<()> {
     Ok(())
 }
 
-pub fn part2() -> io::Result<()> {
+pub fn part2() -> MyResult<()> {
     let ps = ProgramState::init_from_file("data/input23.txt")?;
 
     let mut computers: Vec<_> = (0..50).map(|_| ps.clone()).collect();
@@ -50,7 +50,7 @@ pub fn part2() -> io::Result<()> {
 
     for (i, computer) in computers.iter_mut().enumerate() {
         let inp: &[isize] = &[i as isize];
-        let (out, _) = computer.run_with_input(inp).unwrap();
+        let (out, _) = computer.run_with_input(inp)?;
         assert!(out.len() % 3 == 0);
         for j in 0..out.len() / 3 {
             let (addr, x, y) = (out[3 * j], out[3 * j + 1], out[3 * j + 2]);
@@ -68,7 +68,7 @@ pub fn part2() -> io::Result<()> {
                 let (x, y) = mailboxes[i].remove(0);
                 vec![x, y]
             };
-            let (out, _) = computers[i].run_with_input(&inp).unwrap();
+            let (out, _) = computers[i].run_with_input(&inp)?;
             assert!(out.len() % 3 == 0);
             for j in 0..out.len() / 3 {
                 idle = false;

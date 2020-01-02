@@ -1,14 +1,14 @@
 use crate::intcode::ProgramState;
-use std::io;
+use crate::my_error::MyResult;
 
-pub fn part1() -> io::Result<Vec<isize>> {
+pub fn part1() -> MyResult<Vec<isize>> {
     let mut ps = ProgramState::init_from_file("data/input09.txt")?;
-    let (result, _) = ps.run_with_input(&[1]).unwrap();
+    let (result, _) = ps.run_with_input(&[1])?;
     Ok(result)
 }
 
-pub fn part2() -> io::Result<Vec<isize>> {
+pub fn part2() -> MyResult<Vec<isize>> {
     let mut ps = ProgramState::init_from_file("data/input09.txt")?;
-    let (result, _) = ps.run_with_input(&[2]).unwrap();
+    let (result, _) = ps.run_with_input(&[2])?;
     Ok(result)
 }
