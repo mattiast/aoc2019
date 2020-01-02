@@ -1,22 +1,23 @@
 use crate::intcode::ProgramState;
+use crate::my_error::MyResult;
 use rand::thread_rng;
 use rand::Rng;
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::{self, prelude::BufRead, BufReader};
 
-fn one_step(ps: &mut ProgramState, direction: isize) -> isize {
+fn one_step(ps: &mut ProgramState, direction: isize) -> MyResult<isize> {
     let mut input: Option<isize> = Some(direction);
     let mut output: Option<isize> = None;
     loop {
         match output {
             Some(x) => {
                 assert!(input.is_none());
-                return x;
+                return Ok(x);
             }
             None => {
-                let inst = ps.parse_instruction().unwrap();
-                output = ps.execute_instruction(inst, &mut input).unwrap();
+                let inst = ps.parse_instruction()?;
+                output = ps.execute_instruction(inst, &mut input)?;
             }
         }
     }
@@ -125,8 +126,8 @@ where
     Direction::random(rng)
 }
 
-pub fn print_maze() {
-    let mut ps = ProgramState::init_from_file("data/input15.txt").unwrap();
+pub fn print_maze() -> MyResult<()> {
+    let mut ps = ProgramState::init_from_file("data/input15.txt")?;
     let mut rng = thread_rng();
     let mut pos: (usize, usize) = (25, 25);
     let mut grid: Vec<Vec<Tile>> = vec![vec![Tile::Unknown; 50]; 50];
@@ -137,7 +138,7 @@ pub fn print_maze() {
         let direction = artificial_intelligence(pos, &grid, &mut rng);
         //let direction = dir.left();
         let next_pos = direction.step(pos);
-        let output = one_step(&mut ps, direction.code());
+        let output = one_step(&mut ps, direction.code())?;
         let tile = Tile::from_code(output);
         grid[next_pos.0][next_pos.1] = tile;
         if tile != Tile::Wall {
@@ -145,6 +146,7 @@ pub fn print_maze() {
         }
     }
     draw_grid(&grid);
+    Ok(())
 }
 
 fn read_maze() -> io::Result<Vec<Vec<Tile>>> {
