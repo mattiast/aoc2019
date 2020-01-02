@@ -46,17 +46,24 @@ impl Instruction {
     }
 }
 
-fn parse_parameter(
-    program: &[isize],
-    addr: usize,
-    mode_code: usize,
-) -> Result<Parameter, &'static str> {
-    let x = *program.get(addr).ok_or("out of bounds")?;
+#[derive(Debug)]
+pub enum Error {
+    Custom(String),
+    InvalidParameterMode,
+    InvalidOpCode,
+    OutOfBounds,
+    CantWriteImmediateValue,
+    OutOfInputs,
+    ProgramTerminated,
+}
+
+fn parse_parameter(program: &[isize], addr: usize, mode_code: usize) -> Result<Parameter, Error> {
+    let x = *program.get(addr).ok_or(Error::OutOfBounds)?;
     match mode_code {
         0 => Ok(Parameter::Positional(x as usize)),
         1 => Ok(Parameter::Immediate(x)),
         2 => Ok(Parameter::Relative(x)),
-        _ => Err("unknown parameter mode"),
+        _ => Err(Error::InvalidParameterMode),
     }
 }
 
@@ -90,10 +97,10 @@ impl ProgramState {
         Ok(ps)
     }
 
-    pub fn parse_instruction(&self) -> Result<Instruction, &'static str> {
+    pub fn parse_instruction(&self) -> Result<Instruction, Error> {
         let program = &self.mem;
         let ip = self.ip;
-        let val0 = *program.get(ip).ok_or("out of bounds")? as usize;
+        let val0 = *program.get(ip).ok_or(Error::OutOfBounds)? as usize;
         let opcode = val0 % 100;
         if opcode == 99 {
             return Ok(Instruction::Terminate);
@@ -144,16 +151,16 @@ impl ProgramState {
             let p1 = parse_parameter(program, ip + 1, (val0 / 100) % 10)?;
             return Ok(Instruction::AdjustRelativeBase(p1));
         }
-        Err("invalid opcode")
+        Err(Error::InvalidOpCode)
     }
 
     pub fn execute_instruction(
         &mut self,
         inst: Instruction,
         input: &mut Option<isize>,
-    ) -> Result<Option<isize>, &'static str> {
+    ) -> Result<Option<isize>, Error> {
         if self.terminated {
-            return Err("program terminated");
+            return Err(Error::ProgramTerminated);
         }
         match inst {
             Instruction::Terminate => {
@@ -175,7 +182,7 @@ impl ProgramState {
                 Ok(None)
             }
             Instruction::Input(i1) => {
-                let inpt = input.ok_or("ran out of inputs")?;
+                let inpt = input.ok_or(Error::OutOfInputs)?;
                 *input = None;
                 write_to_memory(i1, inpt, self)?;
                 self.ip += inst.size();
@@ -234,7 +241,7 @@ impl ProgramState {
         }
     }
 
-    pub fn run_with_input(&mut self, input: &[isize]) -> Result<(Vec<isize>, usize), &'static str> {
+    pub fn run_with_input(&mut self, input: &[isize]) -> Result<(Vec<isize>, usize), Error> {
         let mut output = Vec::new();
         let mut i = 0usize;
 
@@ -257,28 +264,24 @@ impl ProgramState {
     }
 }
 
-fn read_parameter(p: Parameter, state: &ProgramState) -> Result<isize, &'static str> {
+fn read_parameter(p: Parameter, state: &ProgramState) -> Result<isize, Error> {
     match p {
         Parameter::Immediate(x) => Ok(x),
         Parameter::Positional(a) => {
-            let x = state.mem.get(a).ok_or("out of bounds")?;
+            let x = state.mem.get(a).ok_or(Error::OutOfBounds)?;
             Ok(*x)
         }
         Parameter::Relative(a) => {
             let addr = (state.relative_base as isize + a) as usize;
-            let x = state.mem.get(addr).ok_or("out of bounds")?;
+            let x = state.mem.get(addr).ok_or(Error::OutOfBounds)?;
             Ok(*x)
         }
     }
 }
 
-fn write_to_memory(
-    p: Parameter,
-    value: isize,
-    state: &mut ProgramState,
-) -> Result<(), &'static str> {
+fn write_to_memory(p: Parameter, value: isize, state: &mut ProgramState) -> Result<(), Error> {
     let addr = match p {
-        Parameter::Immediate(_) => return Err("trying to write to immediate value"),
+        Parameter::Immediate(_) => return Err(Error::CantWriteImmediateValue),
         Parameter::Positional(a) => a,
         Parameter::Relative(a) => ((state.relative_base as isize + a) as usize),
     };

@@ -1,10 +1,10 @@
-use crate::intcode::ProgramState;
+use crate::intcode::{self, ProgramState};
 
 use ncurses::{addstr, clear, endwin, initscr, mv, refresh};
 use std::cmp::Ordering;
 use std::io;
 
-fn run_round(ps: &mut ProgramState) -> Result<(isize, isize, isize), &'static str> {
+fn run_round(ps: &mut ProgramState) -> Result<(isize, isize, isize), intcode::Error> {
     let mut output: Vec<isize> = vec![];
     loop {
         let inst = ps.parse_instruction()?;
@@ -124,7 +124,7 @@ pub fn part1() -> io::Result<()> {
     while !ps.terminated {
         let out = run_round(&mut ps);
         match out {
-            Err("program terminated") => {
+            Err(intcode::Error::ProgramTerminated) => {
                 break;
             }
             Ok(out) => {

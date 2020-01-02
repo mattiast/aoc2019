@@ -1,6 +1,9 @@
 use std::io;
-fn main() -> io::Result<()> {
-    advent::day18::part1()?;
+
+use advent::my_error::MyError;
+
+fn main() -> Result<(), MyError> {
+    // advent::day18::part1()?;
     Ok(())
 }
 

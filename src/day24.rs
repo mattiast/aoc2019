@@ -53,7 +53,6 @@ pub fn part1() -> io::Result<()> {
             seen.insert(x);
         }
         x = next(x);
-
     }
     println!("{}", x);
 
