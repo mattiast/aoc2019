@@ -27,7 +27,7 @@ pub fn part1() -> MyResult<()> {
     Ok(())
 }
 
-fn find_crossings(grid: &Vec<Vec<u8>>) {
+fn find_crossings(grid: &[Vec<u8>]) {
     let n = grid.len();
     let m = grid[0].len();
 
@@ -111,7 +111,7 @@ fn turn((x, y): (usize, usize), (dx, dy): (isize, isize)) -> (usize, usize) {
     (nx as usize, ny as usize)
 }
 
-fn read(maze: &Vec<Vec<bool>>, p: (usize, usize)) -> bool {
+fn read(maze: &[Vec<bool>], p: (usize, usize)) -> bool {
     if p.0 < maze.len() {
         let row = &maze[p.0];
         if p.1 < row.len() {

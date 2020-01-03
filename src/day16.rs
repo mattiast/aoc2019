@@ -14,14 +14,14 @@ pub fn read_input() -> MyResult<Vec<i32>> {
     Ok(numbers)
 }
 
-fn fft(x: &mut [i32]) {
-    let n = x.len();
+fn fft(xs: &mut [i32]) {
+    let n = xs.len();
 
     let cumsum = {
         let mut cumsum = Vec::with_capacity(n + 1);
         cumsum.push(0);
         let mut s = 0;
-        for v in x.iter() {
+        for v in xs.iter() {
             s += v;
             cumsum.push(s);
         }
@@ -30,7 +30,7 @@ fn fft(x: &mut [i32]) {
 
     let f = |k: usize| cumsum[k.min(n)];
 
-    for l in 1..n {
+    for (l, x) in xs.iter_mut().enumerate().skip(1) {
         let mut y = 0;
         for q in 1..n {
             if (4 * q - 3) * l >= n {
@@ -38,7 +38,7 @@ fn fft(x: &mut [i32]) {
             }
             y += f((4 * q - 2) * l) - f((4 * q - 3) * l) + f((4 * q - 1) * l) - f(4 * q * l);
         }
-        x[l] = y.abs() % 10;
+        *x = y.abs() % 10;
     }
 }
 

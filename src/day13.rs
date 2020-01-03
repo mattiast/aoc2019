@@ -3,7 +3,6 @@ use crate::my_error::MyResult;
 
 use ncurses::{addstr, clear, endwin, initscr, mv, refresh};
 use std::cmp::Ordering;
-use std::io;
 
 fn run_round(ps: &mut ProgramState) -> Result<(isize, isize, isize), intcode::Error> {
     let mut output: Vec<isize> = vec![];
@@ -22,7 +21,7 @@ fn run_round(ps: &mut ProgramState) -> Result<(isize, isize, isize), intcode::Er
     Ok((output[0], output[1], output[2]))
 }
 
-fn draw_grid(grid: &Vec<Vec<isize>>, score: isize) {
+fn draw_grid(grid: &[Vec<isize>], score: isize) {
     for j in 0..26 {
         let line: String = (0..43)
             .map(|i| match grid[i][j] {
@@ -41,7 +40,7 @@ fn draw_grid(grid: &Vec<Vec<isize>>, score: isize) {
     addstr(&format!("Score {}", score));
 }
 
-fn artificial_intelligence(grid: &Vec<Vec<isize>>) -> isize {
+fn artificial_intelligence(grid: &[Vec<isize>]) -> isize {
     let mut paddle_x: Option<usize> = None;
     let mut ball_x: Option<usize> = None;
     for (i, row) in grid.iter().enumerate() {

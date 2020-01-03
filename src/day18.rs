@@ -21,6 +21,9 @@ impl Tile {
     }
 }
 
+type Point = (usize, usize);
+type Maze = Vec<Vec<Tile>>;
+
 fn read_maze() -> io::Result<State> {
     let file = File::open("data/input18.txt")?;
     // let file = File::open("day18sample.txt")?;
@@ -62,16 +65,13 @@ fn read_maze() -> io::Result<State> {
     })
 }
 
-fn find_neighbors((x, y): Point, grid: &Maze) -> Vec<Point> {
+fn find_neighbors((x, y): Point, grid: &[Vec<Tile>]) -> Vec<Point> {
     let cands = vec![(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)];
     cands
         .into_iter()
         .filter(|p| grid[p.0][p.1].can_step())
         .collect()
 }
-
-type Point = (usize, usize);
-type Maze = Vec<Vec<Tile>>;
 
 #[derive(Clone)]
 struct State {
@@ -133,7 +133,7 @@ pub fn part1() -> io::Result<()> {
     Ok(())
 }
 
-fn random_search() -> io::Result<()> {
+fn _random_search() -> io::Result<()> {
     let state = read_maze()?;
 
     let mut rng = thread_rng();

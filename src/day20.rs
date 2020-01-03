@@ -27,31 +27,33 @@ impl Tile {
 }
 
 type Point = (usize, usize);
-type Maze = Vec<Vec<Tile>>;
+struct Maze {
+    grid: Vec<Vec<Tile>>,
+}
 
-fn find_neighbors((x, y): Point, grid: &Maze) -> Vec<Point> {
+fn find_neighbors((x, y): Point, maze: &Maze) -> Vec<Point> {
     let mut result: Vec<Point> = Vec::with_capacity(4);
     let cands = vec![(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)];
     for p in cands {
-        let tile = grid[p.0][p.1];
+        let tile = maze.grid[p.0][p.1];
         if tile.is_open() {
             result.push(p);
         }
-        if let Tile::Portal(a, b) = tile {
+        if let Tile::Portal(_, _) = tile {
             result.push(p);
         }
     }
     result
 }
 
-fn resolve_portal(grid: &Maze, p: Point) -> Point {
-    let tile = grid[p.0][p.1];
-    for (x, row) in grid.iter().enumerate() {
+fn resolve_portal(maze: &Maze, p: Point) -> Point {
+    let tile = maze.grid[p.0][p.1];
+    for (x, row) in maze.grid.iter().enumerate() {
         for (y, tile2) in row.iter().enumerate() {
             if tile == *tile2 && (x, y) != p {
                 let cands = vec![(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)];
                 for p in cands {
-                    let tile = grid[p.0][p.1];
+                    let tile = maze.grid[p.0][p.1];
                     if tile.is_open() {
                         return p;
                     }
@@ -65,7 +67,7 @@ fn resolve_portal(grid: &Maze, p: Point) -> Point {
 pub fn part1() -> io::Result<()> {
     let maze = read_maze()?;
 
-    for row in maze.iter() {
+    for row in maze.grid.iter() {
         for tile in row.iter() {
             if let Tile::Portal(c, d) = tile {
                 println!("portal {}{}", c, d);
@@ -81,7 +83,7 @@ pub fn part1() -> io::Result<()> {
     Ok(())
 }
 
-fn bfs(grid: &Maze, start: Point) -> usize {
+fn bfs(maze: &Maze, start: Point) -> usize {
     let mut to_visit: Vec<(Point, usize)> = Vec::with_capacity(100);
     let mut visited: HashSet<Point> = HashSet::new();
 
@@ -92,10 +94,10 @@ fn bfs(grid: &Maze, start: Point) -> usize {
             continue;
         }
         visited.insert(p);
-        if let Tile::Open = grid[p.0][p.1] {
-            let ns = find_neighbors(p, grid);
+        if let Tile::Open = maze.grid[p.0][p.1] {
+            let ns = find_neighbors(p, maze);
             for n in ns {
-                let tile = grid[n.0][n.1];
+                let tile = maze.grid[n.0][n.1];
                 if tile.is_portal() {
                     if tile == Tile::Portal('A', 'A') {
                         continue;
@@ -103,7 +105,7 @@ fn bfs(grid: &Maze, start: Point) -> usize {
                     if tile == Tile::Portal('Z', 'Z') {
                         return d;
                     }
-                    to_visit.push((resolve_portal(grid, n), d + 1));
+                    to_visit.push((resolve_portal(maze, n), d + 1));
                 } else {
                     to_visit.push((n, d + 1));
                 }
@@ -118,12 +120,11 @@ fn read_maze() -> io::Result<Maze> {
     let reader = BufReader::new(file);
 
     let mut result = vec![];
-    for (x, mline) in reader.lines().enumerate() {
+    for mline in reader.lines() {
         let line = mline?;
         let row: Vec<_> = line
             .chars()
-            .enumerate()
-            .map(|(y, c)| match c {
+            .map(|c| match c {
                 '.' => Tile::Open,
                 '#' => Tile::Wall,
                 ' ' => Tile::Wall,
@@ -159,6 +160,8 @@ fn read_maze() -> io::Result<Maze> {
             }
         }
     }
+
+    let result = Maze { grid: result };
 
     Ok(result)
 }

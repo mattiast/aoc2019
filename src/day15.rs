@@ -7,20 +7,15 @@ use std::fs::File;
 use std::io::{self, prelude::BufRead, BufReader};
 
 fn one_step(ps: &mut ProgramState, direction: isize) -> MyResult<isize> {
-    let mut input: Option<isize> = Some(direction);
-    let mut output: Option<isize> = None;
-    loop {
-        match output {
-            Some(x) => {
-                assert!(input.is_none());
-                return Ok(x);
-            }
-            None => {
-                let inst = ps.parse_instruction()?;
-                output = ps.execute_instruction(inst, &mut input)?;
-            }
-        }
-    }
+    let (output, k) = ps.run_with_input(&[direction])?;
+    assert!(output.len() == 1);
+    assert!(k == 1);
+    Ok(output[0])
+}
+
+type Point = (usize, usize);
+struct Maze {
+    grid: Vec<Vec<Tile>>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -88,8 +83,8 @@ impl Direction {
     }
 }
 
-fn draw_grid(grid: &Vec<Vec<Tile>>) {
-    for row in grid {
+fn draw_grid(maze: &Maze) {
+    for row in &maze.grid {
         let line: String = row
             .iter()
             .map(|t| match t {
@@ -103,24 +98,20 @@ fn draw_grid(grid: &Vec<Vec<Tile>>) {
     }
 }
 
-fn artificial_intelligence<T>(
-    (x, y): (usize, usize),
-    grid: &Vec<Vec<Tile>>,
-    rng: &mut T,
-) -> Direction
+fn artificial_intelligence<T>((x, y): (usize, usize), maze: &Maze, rng: &mut T) -> Direction
 where
     T: Rng,
 {
-    if grid[x][y + 1] == Tile::Unknown {
+    if maze.grid[x][y + 1] == Tile::Unknown {
         return Direction::North;
     }
-    if grid[x][y - 1] == Tile::Unknown {
+    if maze.grid[x][y - 1] == Tile::Unknown {
         return Direction::South;
     }
-    if grid[x - 1][y] == Tile::Unknown {
+    if maze.grid[x - 1][y] == Tile::Unknown {
         return Direction::West;
     }
-    if grid[x + 1][y] == Tile::Unknown {
+    if maze.grid[x + 1][y] == Tile::Unknown {
         return Direction::East;
     }
     Direction::random(rng)
@@ -133,23 +124,24 @@ pub fn print_maze() -> MyResult<()> {
     let mut grid: Vec<Vec<Tile>> = vec![vec![Tile::Unknown; 50]; 50];
 
     grid[pos.0][pos.1] = Tile::Open; // start from open tile
+    let mut maze = Maze { grid };
 
     for _ in 0..1_000_000 {
-        let direction = artificial_intelligence(pos, &grid, &mut rng);
+        let direction = artificial_intelligence(pos, &maze, &mut rng);
         //let direction = dir.left();
         let next_pos = direction.step(pos);
         let output = one_step(&mut ps, direction.code())?;
         let tile = Tile::from_code(output);
-        grid[next_pos.0][next_pos.1] = tile;
+        maze.grid[next_pos.0][next_pos.1] = tile;
         if tile != Tile::Wall {
             pos = next_pos;
         }
     }
-    draw_grid(&grid);
+    draw_grid(&maze);
     Ok(())
 }
 
-fn read_maze() -> io::Result<Vec<Vec<Tile>>> {
+fn read_maze() -> io::Result<Maze> {
     let file = File::open("maze.txt")?;
     let reader = BufReader::new(file);
 
@@ -169,22 +161,21 @@ fn read_maze() -> io::Result<Vec<Vec<Tile>>> {
         result.push(row);
     }
 
+    let result = Maze { grid: result };
+
     Ok(result)
 }
 
-fn find_neighbors((x, y): Point, grid: &Maze) -> Vec<Point> {
+fn find_neighbors((x, y): Point, maze: &Maze) -> Vec<Point> {
     let cands = vec![(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)];
     cands
         .into_iter()
-        .filter(|p| grid[p.0][p.1].can_step())
+        .filter(|p| maze.grid[p.0][p.1].can_step())
         .collect()
 }
 
-type Point = (usize, usize);
-type Maze = Vec<Vec<Tile>>;
-
 pub fn part1() -> io::Result<()> {
-    let grid = read_maze()?;
+    let maze = read_maze()?;
 
     let start: Point = (25, 25);
     let mut to_visit: Vec<(Point, usize)> = Vec::with_capacity(100);
@@ -196,11 +187,11 @@ pub fn part1() -> io::Result<()> {
         if visited.contains(&p) {
             continue;
         }
-        if grid[p.0][p.1] == Tile::Oxygen {
+        if maze.grid[p.0][p.1] == Tile::Oxygen {
             println!("Found oxygen at {:?} distance {}", p, d);
             break;
         }
-        let ns = find_neighbors(p, &grid);
+        let ns = find_neighbors(p, &maze);
         for n in ns {
             to_visit.push((n, d + 1));
         }
@@ -210,8 +201,8 @@ pub fn part1() -> io::Result<()> {
     Ok(())
 }
 
-fn find_oxygen(grid: &Maze) -> Point {
-    for (x, row) in grid.iter().enumerate() {
+fn find_oxygen(maze: &Maze) -> Point {
+    for (x, row) in maze.grid.iter().enumerate() {
         for (y, tile) in row.iter().enumerate() {
             if *tile == Tile::Oxygen {
                 return (x, y);
