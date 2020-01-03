@@ -1,3 +1,7 @@
+use rand::thread_rng;
+use rand::Rng;
+use std::cmp::Reverse;
+use std::collections::BinaryHeap;
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::{self, prelude::BufRead, BufReader};
@@ -126,8 +130,6 @@ impl State {
     }
 }
 
-use rand::thread_rng;
-use rand::Rng;
 pub fn part1() -> io::Result<()> {
     artificial_intelligence()?;
     Ok(())
@@ -156,11 +158,8 @@ fn _random_search() -> io::Result<()> {
     Ok(())
 }
 
-use std::cmp::Reverse;
 #[derive(Ord, Eq, PartialEq, PartialOrd)]
 struct ReachedState(usize, Reverse<usize>, Vec<Key>);
-
-use std::collections::BinaryHeap;
 
 fn artificial_intelligence() -> io::Result<()> {
     let state = read_maze()?;
