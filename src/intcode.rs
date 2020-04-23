@@ -3,21 +3,26 @@ use std::io::{self, prelude::BufRead, BufReader};
 
 #[derive(Clone, Copy, Debug)]
 pub enum Parameter {
-    Positional(usize),
     Immediate(isize),
+    Location(Address),
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum Address {
+    Positional(usize),
     Relative(isize),
 }
 
 #[derive(Debug)]
 pub enum Instruction {
-    Add(Parameter, Parameter, Parameter),
-    Mul(Parameter, Parameter, Parameter),
-    Input(Parameter),
+    Add(Parameter, Parameter, Address),
+    Mul(Parameter, Parameter, Address),
+    Input(Address),
     Output(Parameter),
     JumpIfTrue(Parameter, Parameter),
     JumpIfFalse(Parameter, Parameter),
-    LessThan(Parameter, Parameter, Parameter),
-    Equals(Parameter, Parameter, Parameter),
+    LessThan(Parameter, Parameter, Address),
+    Equals(Parameter, Parameter, Address),
     AdjustRelativeBase(Parameter),
     Terminate,
 }
@@ -60,9 +65,18 @@ pub enum Error {
 fn parse_parameter(program: &[isize], addr: usize, mode_code: usize) -> Result<Parameter, Error> {
     let x = *program.get(addr).ok_or(Error::OutOfBounds)?;
     match mode_code {
-        0 => Ok(Parameter::Positional(x as usize)),
+        0 => Ok(Parameter::Location(Address::Positional(x as usize))),
         1 => Ok(Parameter::Immediate(x)),
-        2 => Ok(Parameter::Relative(x)),
+        2 => Ok(Parameter::Location(Address::Relative(x))),
+        _ => Err(Error::InvalidParameterMode),
+    }
+}
+
+fn parse_address(program: &[isize], addr: usize, mode_code: usize) -> Result<Address, Error> {
+    let x = *program.get(addr).ok_or(Error::OutOfBounds)?;
+    match mode_code {
+        0 => Ok(Address::Positional(x as usize)),
+        2 => Ok(Address::Relative(x)),
         _ => Err(Error::InvalidParameterMode),
     }
 }
@@ -108,17 +122,17 @@ impl ProgramState {
         if opcode == 1 {
             let p1 = parse_parameter(program, ip + 1, (val0 / 100) % 10)?;
             let p2 = parse_parameter(program, ip + 2, (val0 / 1000) % 10)?;
-            let p3 = parse_parameter(program, ip + 3, (val0 / 10000) % 10)?;
+            let p3 = parse_address(program, ip + 3, (val0 / 10000) % 10)?;
             return Ok(Instruction::Add(p1, p2, p3));
         }
         if opcode == 2 {
             let p1 = parse_parameter(program, ip + 1, (val0 / 100) % 10)?;
             let p2 = parse_parameter(program, ip + 2, (val0 / 1000) % 10)?;
-            let p3 = parse_parameter(program, ip + 3, (val0 / 10000) % 10)?;
+            let p3 = parse_address(program, ip + 3, (val0 / 10000) % 10)?;
             return Ok(Instruction::Mul(p1, p2, p3));
         }
         if opcode == 3 {
-            let p1 = parse_parameter(program, ip + 1, (val0 / 100) % 10)?;
+            let p1 = parse_address(program, ip + 1, (val0 / 100) % 10)?;
             return Ok(Instruction::Input(p1));
         }
         if opcode == 4 {
@@ -138,13 +152,13 @@ impl ProgramState {
         if opcode == 7 {
             let p1 = parse_parameter(program, ip + 1, (val0 / 100) % 10)?;
             let p2 = parse_parameter(program, ip + 2, (val0 / 1000) % 10)?;
-            let p3 = parse_parameter(program, ip + 3, (val0 / 10000) % 10)?;
+            let p3 = parse_address(program, ip + 3, (val0 / 10000) % 10)?;
             return Ok(Instruction::LessThan(p1, p2, p3));
         }
         if opcode == 8 {
             let p1 = parse_parameter(program, ip + 1, (val0 / 100) % 10)?;
             let p2 = parse_parameter(program, ip + 2, (val0 / 1000) % 10)?;
-            let p3 = parse_parameter(program, ip + 3, (val0 / 10000) % 10)?;
+            let p3 = parse_address(program, ip + 3, (val0 / 10000) % 10)?;
             return Ok(Instruction::Equals(p1, p2, p3));
         }
         if opcode == 9 {
@@ -267,11 +281,17 @@ impl ProgramState {
 fn read_parameter(p: Parameter, state: &ProgramState) -> Result<isize, Error> {
     match p {
         Parameter::Immediate(x) => Ok(x),
-        Parameter::Positional(a) => {
+        Parameter::Location(a) => read_memory(a, state),
+    }
+}
+
+fn read_memory(a: Address, state: &ProgramState) -> Result<isize, Error> {
+    match a {
+        Address::Positional(a) => {
             let x = state.mem.get(a).ok_or(Error::OutOfBounds)?;
             Ok(*x)
         }
-        Parameter::Relative(a) => {
+        Address::Relative(a) => {
             let addr = (state.relative_base as isize + a) as usize;
             let x = state.mem.get(addr).ok_or(Error::OutOfBounds)?;
             Ok(*x)
@@ -279,11 +299,10 @@ fn read_parameter(p: Parameter, state: &ProgramState) -> Result<isize, Error> {
     }
 }
 
-fn write_to_memory(p: Parameter, value: isize, state: &mut ProgramState) -> Result<(), Error> {
-    let addr = match p {
-        Parameter::Immediate(_) => return Err(Error::CantWriteImmediateValue),
-        Parameter::Positional(a) => a,
-        Parameter::Relative(a) => ((state.relative_base as isize + a) as usize),
+fn write_to_memory(a: Address, value: isize, state: &mut ProgramState) -> Result<(), Error> {
+    let addr = match a {
+        Address::Positional(a) => a,
+        Address::Relative(a) => ((state.relative_base as isize + a) as usize),
     };
     state.mem[addr] = value;
     Ok(())
