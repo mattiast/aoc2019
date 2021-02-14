@@ -44,10 +44,7 @@ impl Instruction {
     }
 
     pub fn needs_input(&self) -> bool {
-        match self {
-            Instruction::Input(_) => true,
-            _ => false,
-        }
+        matches!(self, Instruction::Input(_))
     }
 }
 

@@ -1,11 +1,11 @@
 use advent::my_error::MyResult;
 
-fn main() -> MyResult<()> {
+fn _main() -> MyResult<()> {
     advent::day19::part2()?;
     Ok(())
 }
 
-fn _main() -> MyResult<()> {
+fn main() -> MyResult<()> {
     println!("Day 2 part 1: {:?}", advent::day02::part1()?);
     println!("Day 2 part 2: {:?}", advent::day02::part2()?);
 
