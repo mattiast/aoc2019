@@ -219,6 +219,7 @@ impl ProgramState {
                 let x1 = read_parameter(i1, &self)?;
                 if x1 != 0 {
                     let x2 = read_parameter(i2, &self)?;
+                    tracing::debug!("jumping from {} to {}", self.ip, x2);
                     self.ip = x2 as usize;
                     Ok(None)
                 } else {
@@ -230,6 +231,7 @@ impl ProgramState {
                 let x1 = read_parameter(i1, &self)?;
                 if x1 == 0 {
                     let x2 = read_parameter(i2, &self)?;
+                    tracing::debug!("jumping from {} to {}", self.ip, x2);
                     self.ip = x2 as usize;
                     Ok(None)
                 } else {
