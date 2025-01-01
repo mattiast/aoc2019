@@ -72,7 +72,7 @@ impl Direction {
     where
         T: Rng,
     {
-        let i: isize = rng.gen_range(1, 5);
+        let i: isize = rng.gen_range(1..5);
         match i {
             1 => Direction::North,
             2 => Direction::South,

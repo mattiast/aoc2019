@@ -2,16 +2,16 @@
 name = "advent"
 version = "0.1.0"
 authors = ["Matti Astrand <mattiastr@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-clap = "2.33.0"
-itertools = "0.8.2"
-permutator = "0.3.3"
-num = "0.2.0"
-derive_more = "0.99.2"
-ncurses = "5.99.0"
-nom = "5.0.1"
-rand = "0.7.2"
+clap = { version = "4", features = ["cargo"]}
+itertools = "*"
+permutator = "*"
+num = "*"
+derive_more = { version = "*", features = ["from"]}
+ncurses = "*"
+nom = "5"
+rand = "*"

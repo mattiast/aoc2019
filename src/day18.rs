@@ -148,7 +148,7 @@ fn _random_search() -> io::Result<()> {
             if keys.is_empty() {
                 break;
             }
-            let key = keys[rng.gen_range(0, keys.len())];
+            let key = keys[rng.gen_range(0..keys.len())];
             state.move_to_key(key);
         }
         best = best.min(state.odometer);

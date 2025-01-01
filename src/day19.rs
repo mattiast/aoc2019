@@ -1,3 +1,5 @@
+use clap::{arg, command};
+
 use crate::intcode::ProgramState;
 use crate::my_error::MyResult;
 
@@ -13,14 +15,10 @@ pub fn part1() -> MyResult<isize> {
     Ok(total)
 }
 
-use clap::{value_t_or_exit, App, Arg};
 pub fn part2() -> MyResult<()> {
-    let matches = App::new("run computer")
-        .arg(Arg::with_name("x"))
-        .arg(Arg::with_name("y"))
-        .get_matches();
-    let x = value_t_or_exit!(matches, "x", isize);
-    let y = value_t_or_exit!(matches, "y", isize);
+    let matches = command!().arg(arg!("x")).arg(arg!("y")).get_matches();
+    let x = *matches.get_one::<isize>("x").unwrap();
+    let y = *matches.get_one::<isize>("y").unwrap();
     let ps = ProgramState::init_from_file("data/input19.txt")?;
 
     println!("x lo {}", run_with_input(ps.clone(), x + 99, y)?);

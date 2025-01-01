@@ -1,3 +1,5 @@
+use clap::{arg, command};
+
 use crate::my_error::MyResult;
 use std::fs::File;
 use std::io::{prelude::BufRead, BufReader};
@@ -42,14 +44,10 @@ fn fft(xs: &mut [i32]) {
     }
 }
 
-use clap::{value_t_or_exit, App, Arg};
 pub fn part1() -> MyResult<()> {
-    let matches = App::new("run computer")
-        .arg(Arg::with_name("x0"))
-        .arg(Arg::with_name("x1"))
-        .get_matches();
-    let k = value_t_or_exit!(matches, "x0", usize);
-    let skip = value_t_or_exit!(matches, "x1", usize);
+    let matches = command!().arg(arg!("x0")).arg(arg!("x1")).get_matches();
+    let k = *matches.get_one::<usize>("x0").unwrap();
+    let skip = *matches.get_one::<usize>("x1").unwrap();
 
     let mut input = read_input()?;
     let n = input.len();
