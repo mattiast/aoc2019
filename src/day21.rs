@@ -19,8 +19,13 @@ pub fn part1(path: &str) -> MyResult<()> {
     };
     let (stuff, n) = ps.run_with_input(&input)?;
     println!("Check that all input was read: {} == {}", n, input.len());
-    let s = String::from_utf8(stuff.iter().map(|x| *x as u8).collect()).unwrap();
-    print!("{}", s);
+
+    let s = String::from_utf8(stuff[..stuff.len() - 1].iter().map(|x| *x as u8).collect());
+    if let Ok(s) = s {
+        print!("{}", s);
+    } else {
+        println!("{:?}", stuff);
+    }
 
     if let Some(x) = stuff.last() {
         println!("output {}", x);
