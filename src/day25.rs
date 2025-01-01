@@ -12,7 +12,7 @@ pub fn part1() -> MyResult<()> {
     let mut ps = ProgramState::init_from_file("data/input25.txt")?;
 
     let (out, _) = ps.run_with_input(&[])?;
-    addstr(&get_string(out));
+    addstr(&get_string(out)).unwrap();
     while !ps.terminated {
         let mut line = String::new();
         getstr(&mut line);
@@ -21,7 +21,7 @@ pub fn part1() -> MyResult<()> {
         let (out, _) = ps.run_with_input(&inp)?;
         clear();
         let s = get_string(out);
-        addstr(&s);
+        addstr(&s).unwrap();
         if ps.terminated {
             endwin();
             println!("{}", s);

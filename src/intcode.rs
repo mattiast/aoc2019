@@ -299,7 +299,7 @@ fn read_memory(a: Address, state: &ProgramState) -> Result<isize, Error> {
 fn write_to_memory(a: Address, value: isize, state: &mut ProgramState) -> Result<(), Error> {
     let addr = match a {
         Address::Positional(a) => a,
-        Address::Relative(a) => ((state.relative_base as isize + a) as usize),
+        Address::Relative(a) => (state.relative_base as isize + a) as usize,
     };
     state.mem[addr] = value;
     Ok(())

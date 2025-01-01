@@ -20,7 +20,7 @@ fn admissible_password2(w: u64) -> bool {
 
     let has_g2 = cs
         .into_iter()
-        .group_by(|x| *x)
+        .chunk_by(|x| *x)
         .into_iter()
         .any(|(_, group)| group.count() == 2);
 

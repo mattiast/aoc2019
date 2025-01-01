@@ -34,10 +34,10 @@ fn draw_grid(grid: &[Vec<isize>], score: isize) {
             })
             .collect();
         mv(j as i32, 0);
-        addstr(&line);
+        addstr(&line).unwrap();
     }
     mv(26, 0);
-    addstr(&format!("Score {}", score));
+    addstr(&format!("Score {}", score)).unwrap();
 }
 
 fn artificial_intelligence(grid: &[Vec<isize>]) -> isize {
