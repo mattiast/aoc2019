@@ -1,3 +1,14 @@
+/// Opcodes, instruction, size
+/// 1, add , 4
+/// 2, mul , 4
+/// 3, input , 2
+/// 4, output , 2
+/// 5, jump-if-true , 3
+/// 6, jump-if-false , 3
+/// 7, less-than , 4
+/// 8, equals , 4
+/// 9, adjust-relative-base , 2
+/// 99, terminate , 1
 use std::fs::File;
 use std::io::{self, prelude::BufRead, BufReader};
 
@@ -252,6 +263,8 @@ impl ProgramState {
         }
     }
 
+    /// Run the program until it terminates or needs more input than is provided
+    /// Returns the output and the number of inputs consumed
     pub fn run_with_input(&mut self, input: &[isize]) -> Result<(Vec<isize>, usize), Error> {
         let mut output = Vec::new();
         let mut i = 0usize;
