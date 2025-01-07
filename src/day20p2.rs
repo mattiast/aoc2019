@@ -46,9 +46,6 @@ pub fn part1() -> io::Result<()> {
     let maze = parse::read_maze()?;
     let maze = check_maze(&maze).unwrap();
 
-    let n = find_neighbors(((2, 33), 0), &maze);
-    println!("{:?}", n);
-
     let d = bfs(&maze);
     println!("{:?}", d);
 
@@ -60,8 +57,7 @@ fn bfs(maze: &Maze) -> usize {
     let mut visited: HashSet<Position> = HashSet::new();
 
     to_visit.push_back(((maze.start, 0), 0));
-    while !to_visit.is_empty() {
-        let (p, dist) = to_visit.pop_front().unwrap();
+    while let Some((p, dist)) = to_visit.pop_front() {
         if visited.contains(&p) {
             continue;
         }
